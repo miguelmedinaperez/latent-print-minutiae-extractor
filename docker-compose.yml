@@ -1,0 +1,17 @@
+# Minutiae extraction web service. `docker compose up` -> http://localhost:8000
+# CPU by default; for NVIDIA GPU install nvidia-container-toolkit and uncomment the deploy block.
+services:
+  extractor:
+    build: .
+    image: latent-print-minutiae-extractor:latest
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    # GPU (NVIDIA): uncomment, and base the image on a CUDA PyTorch (see Dockerfile note)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

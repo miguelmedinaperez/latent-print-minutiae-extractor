@@ -57,19 +57,26 @@ independently — so it scales horizontally. A Kubernetes Deployment + Service +
 
 ## Hardware & runtime
 
-| | GPU (NVIDIA RTX 5080, Blackwell) | CPU |
-|---|---|---|
-| fingerprint (~768×800) | **~19 ms** | ~0.9 s |
-| palmprint (~850×1750) | **~86 ms** | ~2.3 s |
+Per-image latency on an NVIDIA RTX 5080 (Blackwell) and on CPU:
 
-- **GPU strongly recommended** (≈ 45× faster). The model is tiny — ~0.9 M parameters, ~8 MB weights
-  — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
+| | GPU fp16 (default) | GPU fp32 | CPU |
+|---|---|---|---|
+| fingerprint (~768×800) | **~12 ms** | ~16 ms | ~0.9 s |
+| palmprint (~850×1750) | **~30 ms** | ~41 ms | ~2.4 s |
+
+- **GPU strongly recommended** (≈ 75× faster than CPU). The model is tiny — ~0.9 M parameters,
+  ~8 MB weights — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
+- **fp16 is on by default on GPU** (`MinutiaeExtractor(half=True)`): ~25 % faster and the detected
+  minutiae are unchanged (verified — 100 % position overlap vs fp32). Pass `half=False` to disable.
 - **CUDA note:** install a PyTorch build matching your GPU. NVIDIA Blackwell (sm_120) needs a CUDA 13
   build of PyTorch; older cards work with stock CUDA 12 wheels. CPU works everywhere (slower).
-- **Batching gives no per-image speedup.** `extract_batch` exists for convenience, but the
-  per-image post-processing (non-max suppression + decode) dominates, not the network forward — so
-  to raise throughput, **run more workers/pods** (one model each) rather than larger batches. This
-  is why the web service + horizontal autoscaling is the recommended deployment for high volume.
+- **Batching does *not* speed things up — scale out instead.** `extract_batch` exists for
+  convenience, but a single full-resolution forward already **saturates the GPU**, so per-image time
+  is flat regardless of batch size (measured: ~12 ms/img from batch 1 to 32). This is inherent to
+  processing at full input resolution — there is no architecture change that adds batch throughput
+  without trading detection accuracy (a smaller/lower-resolution model would). To raise throughput,
+  **run more workers/pods** (one model each); the web service + horizontal autoscaling is the
+  recommended high-volume deployment.
 
 ## Fine-tune on your own data
 

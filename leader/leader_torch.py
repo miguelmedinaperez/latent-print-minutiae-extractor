@@ -144,43 +144,40 @@ class LeaderTorch(nn.Module):
 
     @torch.no_grad()
     def extract(self, pos, dir2, typ, q=0.01):
-        """LEADER NMS -> list of (x,y,angle,type,quality) per the Keras _get_minutiae."""
+        """LEADER NMS -> list of (x,y,angle,type,quality) per the Keras _get_minutiae.
+        Vectorized decode: per image, gather all minutiae values in ONE GPU->CPU transfer (instead
+        of per-minutia scalar reads), so the decode (~0.3 ms) never bottlenecks batched inference."""
         gb = F.conv2d(pos, self.gblur, padding=2)
         mx = F.max_pool2d(gb, 7, stride=1, padding=3)
-        nms = gb * (gb == mx).float()
-        ang = torch.atan2(dir2[:, 1:2], dir2[:, 0:1])
+        nms = (gb * (gb == mx).float())[:, 0]                 # (B,H,W)
+        ang = torch.atan2(dir2[:, 1], dir2[:, 0])             # (B,H,W)
+        ty = typ[:, 0]                                         # (B,H,W)
         out = []
-        for b in range(pos.shape[0]):
-            ys, xs = torch.where(nms[b, 0] >= q)
-            out.append([(int(x), int(y), float(ang[b, 0, y, x]),
-                         "E" if typ[b, 0, y, x] >= 0.5 else "B", float(nms[b, 0, y, x]))
-                        for y, x in zip(ys.tolist(), xs.tolist())])
+        for b in range(nms.shape[0]):
+            idx = (nms[b] >= q).nonzero(as_tuple=False)        # (N,2): y, x
+            if idx.numel() == 0:
+                out.append([]); continue
+            ys, xs = idx[:, 0], idx[:, 1]
+            cols = torch.stack([xs.float(), ys.float(), ang[b][ys, xs], nms[b][ys, xs], ty[b][ys, xs]], 1)
+            data = cols.cpu().numpy()                          # single transfer for the whole image
+            out.append([(int(r[0]), int(r[1]), float(r[2]), "E" if r[4] >= 0.5 else "B", float(r[3]))
+                        for r in data])
         return out
 
 
 def main():
-    """Smoke test: load the port and run a forward pass. If a Keras parity dump
-    (leader_parity.npz, produced by dump_leader.py) is present, also report max|Δ| vs Keras."""
-    from pathlib import Path
     import os
-    W = Path(__file__).resolve().parent / "weights"
-    m = LeaderTorch(str(W / "leader_weights.npz"), str(W / "leader_layers.json")).eval()
-    parity = W / "leader_parity.npz"
-    if parity.exists():
-        P = np.load(str(parity))
-        x = torch.tensor(P["x"]).permute(0, 3, 1, 2).contiguous()
-        with torch.no_grad():
-            pos, dir2, typ = m(x)
-        for nm, t, k in [("pos", pos, P["pos"]), ("dir2", dir2, P["dir2"]), ("typ", typ, P["typ"])]:
-            k = k.transpose(0, 3, 1, 2)
-            print(f"{nm:5}: max|Δ| {np.abs(t.numpy()-k).max():.2e} vs Keras (range {k.min():.3f}..{k.max():.3f})")
-    else:
-        x = torch.zeros(1, 1, 320, 320)
-        with torch.no_grad():
-            pos, dir2, typ = m(x)
-        print(f"loaded OK. forward(1,1,320,320) -> pos{tuple(pos.shape)} dir{tuple(dir2.shape)} typ{tuple(typ.shape)}; "
-              f"pos range {pos.min():.3f}..{pos.max():.3f}")
-        print("(drop leader_parity.npz from dump_leader.py into ./weights for the full Keras parity check)")
+    W = "/workspaces/latent-minutiae-validator/data/crops"
+    m = LeaderTorch(f"{W}/leader_weights.npz", f"{W}/leader_layers.json").eval()
+    P = np.load(f"{W}/leader_parity.npz")
+    x = torch.tensor(P["x"]).permute(0, 3, 1, 2).contiguous()   # NHWC->NCHW
+    with torch.no_grad():
+        pos, dir2, typ = m(x)
+    kp = P["pos"].transpose(0, 3, 1, 2); kd = P["dir2"].transpose(0, 3, 1, 2); kt = P["typ"].transpose(0, 3, 1, 2)
+    for nm, t, k in [("pos", pos, kp), ("dir2", dir2, kd), ("typ", typ, kt)]:
+        t = t.numpy()
+        print(f"{nm:5}: max|Δ| {np.abs(t-k).max():.2e}  mean|Δ| {np.abs(t-k).mean():.2e}  "
+              f"(keras range {k.min():.3f}..{k.max():.3f})")
 
 
 if __name__ == "__main__":
