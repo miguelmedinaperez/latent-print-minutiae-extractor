@@ -1,0 +1,28 @@
+Latent Minutiae Extraction (PyTorch)
+====================================
+
+This project redistributes PyTorch ports and fine-tuned weights derived from three
+MIT-licensed open-source projects. All retain their original MIT licenses.
+
+1. FingerNet
+   Fingerprint minutiae extraction CNN (FCN). MIT License.
+   The `minutiae_superset/fingernet.py` module and `ports/fingernet_torch.py` are a
+   faithful PyTorch port; bundled FingerNet weights are converted from the original.
+
+2. MinutiaeNet  (CoarseNet + FineNet)
+   Copyright (c) 2017 Dinh-Luan Nguyen. MIT License.
+   https://github.com/luannd/MinutiaeNet
+   `minutiae_superset/{coarsenet,finenet,minutiaenet}.py` and `ports/{coarsenet,finenet,
+   minutiaenet}_torch.py` are a faithful PyTorch port; bundled weights are converted from
+   the original.
+
+3. PyFing / LEADER
+   Copyright (c) 2023 Raffaele Cappelli. MIT License.
+   LEADER (Lightweight End-to-end Attention-gated Dual autoencodER) minutiae extractor.
+   `leader/leader_torch.py` is a PyTorch port of the original Keras model, verified to
+   reproduce its outputs to ~1e-6. `leader/weights/leader_weights.npz` are the original
+   LEADER weights (dumped from the MIT-licensed package); `leader_universal_deploy.pt` is
+   a derivative fine-tuned from them.
+
+Fine-tuned weights in this repository are derivative works of the above and are released
+under the same MIT terms. The fine-tuning datasets are not included.

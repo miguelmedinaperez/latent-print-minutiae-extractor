@@ -1,0 +1,2815 @@
+[
+ {
+  "name": "input",
+  "type": "InputLayer",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "stem0_conv",
+  "type": "Conv2D",
+  "config": {
+   "filters": 8,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "stem0_dilated_conv",
+  "type": "Conv2D",
+  "config": {
+   "filters": 8,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    2,
+    2
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "stem0_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "stem0_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "stem0_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "stem0_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "stem0_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_0_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 16,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "enc0_0_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc0_0_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_0_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_0_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_0_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_0_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_1_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 32,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "enc0_1_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc0_1_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_1_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_1_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_1_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_1_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_2_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 64,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "enc0_2_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc0_2_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_2_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_2_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_2_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_2_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_3_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 128,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "enc0_3_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc0_3_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_3_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_3_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_3_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc0_3_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_3_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 128,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "dec0_3_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec0_3_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_3_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_3_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_3_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_2_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 64,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "dec0_2_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec0_2_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_2_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_2_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_2_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_1_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 32,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "dec0_1_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec0_1_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_1_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_1_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_1_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_0_conv",
+  "type": "SeparableConv2D",
+  "config": {
+   "filters": 16,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true,
+   "depth_multiplier": 1
+  },
+  "nweights": 3
+ },
+ {
+  "name": "dec0_0_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec0_0_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_0_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec0_0_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "stem1_conv",
+  "type": "Conv2D",
+  "config": {
+   "filters": 16,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "stem1_dilated_conv",
+  "type": "Conv2D",
+  "config": {
+   "filters": 16,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    2,
+    2
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec0_0_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "stem1_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "attention_conv_d1",
+  "type": "Conv2D",
+  "config": {
+   "filters": 16,
+   "kernel_size": [
+    3,
+    3
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "attention_conv_d3",
+  "type": "Conv2D",
+  "config": {
+   "filters": 16,
+   "kernel_size": [
+    3,
+    3
+   ],
+   "dilation_rate": [
+    3,
+    3
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "attention_conv_d6",
+  "type": "Conv2D",
+  "config": {
+   "filters": 16,
+   "kernel_size": [
+    3,
+    3
+   ],
+   "dilation_rate": [
+    6,
+    6
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "stem1_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "attention_dconc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "stem1_activation",
+  "type": "Activation",
+  "config": {
+   "activation": "gelu"
+  },
+  "nweights": 0
+ },
+ {
+  "name": "attention_s",
+  "type": "Conv2D",
+  "config": {
+   "filters": 32,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "valid",
+   "activation": "sigmoid",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "stem1_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "attention_mult",
+  "type": "Multiply",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "stem1_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "attention_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_0_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "enc1_0_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_0_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 256,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_0_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 64,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_0_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "enc1_0_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 32,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_0_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_0_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_0_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_0_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_1_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "enc1_1_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_1_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 128,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_1_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 32,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_1_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "enc1_1_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 64,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_1_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_1_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_1_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_1_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_2_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "enc1_2_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_2_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 256,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_2_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 64,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_2_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "enc1_2_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 128,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_2_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_2_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_2_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_2_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_3_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "enc1_3_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_3_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 512,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_3_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 128,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_3_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "enc1_3_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 32,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "enc1_3_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_3_ap",
+  "type": "AveragePooling2D",
+  "config": {
+   "strides": [
+    2,
+    2
+   ],
+   "padding": "same",
+   "pool_size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_3_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "enc1_3_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_3_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "dec1_3_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_3_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 128,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_3_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 32,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_3_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "dec1_3_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 27,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_3_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_3_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_3_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_2_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "dec1_2_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_2_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 236,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_2_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 59,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_2_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "dec1_2_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 91,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_2_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_2_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_2_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_1_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "dec1_1_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_1_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 876,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_1_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 219,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_1_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "dec1_1_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 42,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_1_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_1_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_1_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_0_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "dec1_0_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_0_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 424,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_0_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 106,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_0_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "dec1_0_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 20,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "dec1_0_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_0_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "dec1_0_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_0_ibc_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "head_0_ibc_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_0_ibc_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 208,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_ibc_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "head_0_ibc_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 52,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_ibc_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_ibc_depthwise_conv",
+  "type": "DepthwiseConv2D",
+  "config": {
+   "kernel_size": [
+    7,
+    7
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false,
+   "depth_multiplier": 1
+  },
+  "nweights": 1
+ },
+ {
+  "name": "head_0_ibc_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "head_1_ibc_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 208,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_ibc_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_0_ibc_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 6,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_ibc_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 52,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_ibc_conv_exp",
+  "type": "Conv2D",
+  "config": {
+   "filters": 208,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_0_up_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_1_ibc_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "head_2_ibc_conv_red",
+  "type": "Conv2D",
+  "config": {
+   "filters": 52,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_0_up_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_1_ibc_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 6,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_ibc_add",
+  "type": "Add",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "head_0_conv1",
+  "type": "Conv2D",
+  "config": {
+   "filters": 4,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_up_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_2_ibc_conv_adj",
+  "type": "Conv2D",
+  "config": {
+   "filters": 6,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_0_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_up_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_2_up_up",
+  "type": "UpSampling2D",
+  "config": {
+   "size": [
+    2,
+    2
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_0_conv2",
+  "type": "Conv2D",
+  "config": {
+   "filters": 4,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_conv1",
+  "type": "Conv2D",
+  "config": {
+   "filters": 4,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_up_drop_out",
+  "type": "SpatialDropout2D",
+  "config": {
+   "rate": 0.02
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_conv_pos",
+  "type": "Conv2D",
+  "config": {
+   "filters": 1,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "sigmoid",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_conv1",
+  "type": "Conv2D",
+  "config": {
+   "filters": 4,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_1_conv2",
+  "type": "Conv2D",
+  "config": {
+   "filters": 4,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_ln",
+  "type": "LayerNormalization",
+  "config": {
+   "epsilon": 0.001,
+   "axis": [
+    -1
+   ]
+  },
+  "nweights": 2
+ },
+ {
+  "name": "nms_Gaussian_blur",
+  "type": "Conv2D",
+  "config": {
+   "filters": 1,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": false
+  },
+  "nweights": 1
+ },
+ {
+  "name": "head_conv_dir",
+  "type": "Conv2D",
+  "config": {
+   "filters": 2,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "linear",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_2_conv2",
+  "type": "Conv2D",
+  "config": {
+   "filters": 4,
+   "kernel_size": [
+    1,
+    1
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "gelu",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_nms_mp",
+  "type": "MaxPooling2D",
+  "config": {
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "pool_size": [
+    7,
+    7
+   ]
+  },
+  "nweights": 0
+ },
+ {
+  "name": "head_atan2",
+  "type": "Lambda",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "head_conv_typ",
+  "type": "Conv2D",
+  "config": {
+   "filters": 1,
+   "kernel_size": [
+    5,
+    5
+   ],
+   "dilation_rate": [
+    1,
+    1
+   ],
+   "strides": [
+    1,
+    1
+   ],
+   "padding": "same",
+   "activation": "sigmoid",
+   "use_bias": true
+  },
+  "nweights": 2
+ },
+ {
+  "name": "head_nms",
+  "type": "Lambda",
+  "config": {},
+  "nweights": 0
+ },
+ {
+  "name": "head_conc",
+  "type": "Concatenate",
+  "config": {
+   "axis": -1
+  },
+  "nweights": 0
+ }
+]
