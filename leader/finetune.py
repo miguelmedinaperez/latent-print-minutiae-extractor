@@ -1,5 +1,6 @@
 """Fine-tune the universal LEADER recipe on your own latent prints (the recipe found by the
-autoresearch sweep: head + refinement-decoder, Gaussian heatmap sigma=3, plain BCE, 60 epochs).
+autoresearch sweep: head + refinement-decoder, Gaussian heatmap sigma=3, plain BCE, 512px crops,
+60 epochs).
 
     python leader/finetune.py --data /path/to/db1 /path/to/db2 --out my_leader.pt
 
@@ -14,7 +15,7 @@ import numpy as np, cv2 as cv, torch
 from .leader_torch import LeaderTorch
 
 HERE = Path(__file__).resolve().parent
-CROP = 320
+CROP = 512                       # training crop size (round-004: 512 beats 320 under CV); see --crop
 EXTS = ("*.bmp", "*.png", "*.jpg", "*.tif")
 
 
@@ -63,6 +64,7 @@ def sample_crop(img, pts):
 
 
 def main():
+    global CROP                                   # sample_crop()/heatmap() read this module global
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", nargs="+", required=True, help="dirs of images + matching .xml GT")
     ap.add_argument("--out", required=True)
@@ -70,7 +72,9 @@ def main():
     ap.add_argument("--sigma", type=float, default=3.0); ap.add_argument("--wpos", type=float, default=1.0)
     ap.add_argument("--epochs", type=int, default=60); ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--lr", type=float, default=1e-4); ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--crop", type=int, default=CROP, help="training crop size (recipe default 512)")
     a = ap.parse_args()
+    CROP = a.crop
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     np.random.seed(a.seed); torch.manual_seed(a.seed)
 

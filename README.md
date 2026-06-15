@@ -101,7 +101,8 @@ python -m leader.finetune --data /path/db1 /path/db2 --out my_leader.pt
 
 Each `--data` dir holds grayscale images with matching `.xml` GT minutiae
 (`<Minutia X=".." Y=".." Angle=".." />`). Defaults reproduce the universal recipe (head +
-refinement decoder, σ=3 Gaussian heatmap, plain BCE, 60 epochs). See [RESULTS.md](RESULTS.md#recipe).
+refinement decoder, σ=3 Gaussian heatmap, plain BCE, 512 px crops, 60 epochs).
+See [RESULTS.md](RESULTS.md#recipe).
 
 ## Verify the port
 
