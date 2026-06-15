@@ -1,28 +1,25 @@
-Latent Minutiae Extraction (PyTorch)
-====================================
+Latent Print Minutiae Extractor
+===============================
 
-This project redistributes PyTorch ports and fine-tuned weights derived from three
-MIT-licensed open-source projects. All retain their original MIT licenses.
+Copyright (c) 2026 the latent-print-minutiae-extractor authors.
+Licensed under the Apache License, Version 2.0 (see LICENSE).
 
-1. FingerNet
-   Fingerprint minutiae extraction CNN (FCN). MIT License.
-   The `minutiae_superset/fingernet.py` module and `ports/fingernet_torch.py` are a
-   faithful PyTorch port; bundled FingerNet weights are converted from the original.
+This product includes software derived from third-party open-source projects:
 
-2. MinutiaeNet  (CoarseNet + FineNet)
-   Copyright (c) 2017 Dinh-Luan Nguyen. MIT License.
-   https://github.com/luannd/MinutiaeNet
-   `minutiae_superset/{coarsenet,finenet,minutiaenet}.py` and `ports/{coarsenet,finenet,
-   minutiaenet}_torch.py` are a faithful PyTorch port; bundled weights are converted from
-   the original.
+  PyFing / LEADER
+  ---------------
+  Copyright (c) 2023 Raffaele Cappelli. MIT License.
+  LEADER (Lightweight End-to-end Attention-gated Dual autoencodER) minutiae extractor.
 
-3. PyFing / LEADER
-   Copyright (c) 2023 Raffaele Cappelli. MIT License.
-   LEADER (Lightweight End-to-end Attention-gated Dual autoencodER) minutiae extractor.
-   `leader/leader_torch.py` is a PyTorch port of the original Keras model, verified to
-   reproduce its outputs to ~1e-6. `leader/weights/leader_weights.npz` are the original
-   LEADER weights (dumped from the MIT-licensed package); `leader_universal_deploy.pt` is
-   a derivative fine-tuned from them.
+  `leader/leader_torch.py` is a PyTorch port of the original Keras LEADER model, verified to
+  reproduce its outputs to ~1e-6. `leader/weights/leader_weights.npz` and `leader_layers.json`
+  are the original LEADER architecture/weights (dumped from the MIT-licensed package).
+  `leader/weights/leader_universal_deploy.pt` is a derivative fine-tuned from those weights.
 
-Fine-tuned weights in this repository are derivative works of the above and are released
-under the same MIT terms. The fine-tuning datasets are not included.
+  The original LEADER code and weights remain under their MIT License; that license and copyright
+  notice are retained here as required. Fine-tuned weights are derivative works distributed under
+  this project's Apache-2.0 license. The datasets used for fine-tuning are not included.
+
+Benchmark comparisons reported in RESULTS.md additionally cite FingerNet and MinutiaeNet
+(© 2017 Dinh-Luan Nguyen, MIT) for context; no code or weights from those projects are
+included in this repository.

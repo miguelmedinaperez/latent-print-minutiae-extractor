@@ -11,7 +11,7 @@ import argparse, glob, time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 import numpy as np, cv2 as cv, torch
-from leader_torch import LeaderTorch
+from .leader_torch import LeaderTorch
 
 HERE = Path(__file__).resolve().parent
 CROP = 320

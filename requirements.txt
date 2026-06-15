@@ -1,0 +1,6 @@
+torch>=2.2
+numpy
+opencv-python-headless
+fastapi
+uvicorn[standard]
+python-multipart

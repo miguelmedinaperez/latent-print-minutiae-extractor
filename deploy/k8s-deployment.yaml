@@ -1,0 +1,36 @@
+# Horizontally-scalable GPU deployment. Each pod loads one model and serves requests
+# independently; the HPA adds pods under load. (Requires the NVIDIA device plugin for GPU pods.)
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: minutiae-extractor }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: minutiae-extractor } }
+  template:
+    metadata: { labels: { app: minutiae-extractor } }
+    spec:
+      containers:
+        - name: extractor
+          image: <your-registry>/latent-print-minutiae-extractor:latest
+          ports: [{ containerPort: 8000 }]
+          resources:
+            limits: { nvidia.com/gpu: 1, cpu: "2", memory: 4Gi }   # drop the gpu line for CPU pods
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, initialDelaySeconds: 20 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: minutiae-extractor }
+spec:
+  selector: { app: minutiae-extractor }
+  ports: [{ port: 80, targetPort: 8000 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: minutiae-extractor }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: minutiae-extractor }
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }

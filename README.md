@@ -1,60 +1,94 @@
-# Latent Minutiae Extraction (PyTorch)
+# latent-print-minutiae-extractor
 
-GPU PyTorch tooling for **minutiae extraction from latent fingerprints *and* palmprints** at 500 dpi,
-plus a **fine-tuned universal LEADER** model that is the strongest single detector across our
-benchmarks.
+**Minutiae extraction from latent fingerprints *and* palmprints at 500 dpi, with one fine-tuned
+universal model.** A PyTorch port of PyFing's **LEADER** minutiae CNN plus a fine-tuned *universal*
+model that is the **best detector on 3 of 4 benchmarks** (held-out, subject-disjoint 5-fold CV) —
+see [RESULTS.md](RESULTS.md).
 
-Two parts:
+One model handles both print types; the weights (~8 MB) ship in this repo, so it runs out of the box
+on CPU or GPU.
 
-1. **`leader/`** — a verified PyTorch port of PyFing's **LEADER** minutiae CNN, a **fine-tuned
-   universal model** (`leader/weights/leader_universal_deploy.pt`, one model for both fingerprints
-   and palms), an inference CLI, and a config-driven fine-tune script.
-2. **`minutiae_superset/`** — a confidence-ranked **superset** extractor that fuses ported
-   **FingerNet** + **MinutiaeNet** (CoarseNet + FineNet), works on any image size at 500 dpi.
-   (`ports/` holds the reference Keras→PyTorch port code for those nets.)
-
-## Quickstart — universal LEADER
+## Install
 
 ```bash
-pip install torch numpy opencv-python
-python leader/infer.py path/to/latent.png --dpi 500 --quality 0.1 --out minutiae.tsv
-# -> x  y  angle(rad)  quality   (one row per minutia)
+git clone <repo-url> && cd latent-print-minutiae-extractor
+pip install -r requirements.txt          # torch, numpy, opencv, fastapi, uvicorn
 ```
 
-The LEADER weights ship in `leader/weights/` (~8 MB total), so this runs out of the box on CPU or
-GPU. Verify the port reproduces the original Keras model:
+GPU is auto-detected. For an NVIDIA GPU install a CUDA build of PyTorch that matches your card
+(recent cards / Blackwell sm_120 need a CUDA 13 build); otherwise it falls back to CPU.
+
+## Three ways to use it
+
+### 1. Command line
 
 ```bash
-python leader/leader_torch.py        # prints head parity max|Δ| ~1e-6 vs Keras
+python -m leader.infer latent.png --dpi 500 --quality 0.1 --out minutiae.tsv
+python -m leader.infer "prints/*.png" --batch --out-dir out/      # many images
+# TSV columns:  x   y   angle(rad)   quality
 ```
 
-Fine-tune the universal recipe on your own labelled latents:
-
-```bash
-python leader/finetune.py --data /path/db1 /path/db2 --out my_leader.pt
-```
-
-## Results
-
-A single fine-tuned **universal LEADER** is the **best detector on 3 of 4 evaluation sets**
-(held-out, subject-disjoint 5-fold CV). See **[RESULTS.md](RESULTS.md)** for the full per-dataset
-tables vs stock FingerNet, MinutiaeNet, PyFing, and the FingerNet+MinutiaeNet Superset.
-
-## The Superset extractor (FingerNet + MinutiaeNet)
-
-`minutiae_superset/` runs FingerNet + MinutiaeNet and returns their confidence-ranked union; it
-tiles arbitrarily-large inputs and resamples to 500 dpi. Its model weights (FingerNet ~19 MB,
-CoarseNet ~80 MB, FineNet ~218 MB) are **too large to ship in-repo** — download them from the
-release page and place them in `minutiae_superset/weights/`. Then:
+### 2. Python
 
 ```python
-from minutiae_superset import MinutiaeExtractor
-ex = MinutiaeExtractor(device="cuda")
-minutiae = ex.extract(image, dpi=500, method="superset")   # or "fingernet" / "minutiaenet"
+import cv2
+from leader import MinutiaeExtractor
+
+ex = MinutiaeExtractor()                          # loads the universal model (CPU or GPU)
+img = cv2.imread("latent.png", cv2.IMREAD_GRAYSCALE)
+minutiae = ex.extract(img, dpi=500, quality=0.1)  # [{'x','y','angle','quality'}, ...]
+
+# many images in one pass:
+batch = ex.extract_batch([img1, img2, img3], dpi=500)
 ```
 
-## Attribution & license
+### 3. Web service (container — scales on a GPU cluster)
 
-PyTorch ports and redistributed/fine-tuned weights derive from three MIT-licensed projects —
-**FingerNet**, **MinutiaeNet** (© 2017 Dinh-Luan Nguyen), and **PyFing / LEADER** (© 2023 R.
-Cappelli). See [NOTICE](NOTICE) and [LICENSE](LICENSE). This repository is released under MIT.
+```bash
+docker build -t minutiae-extractor .
+docker run --gpus all -p 8000:8000 minutiae-extractor      # drop --gpus all for CPU
+curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1"
+```
+
+`POST /extract` (one image) and `POST /extract_batch` (several) return JSON; `GET /health` reports
+readiness and device. The service is **stateless** — each pod loads one model and serves
+independently — so it scales horizontally. A Kubernetes Deployment + Service + HPA example
+(one GPU per pod, autoscaled on load) is in [`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
+
+## Hardware & runtime
+
+| | GPU (NVIDIA RTX 5080, Blackwell) | CPU |
+|---|---|---|
+| fingerprint (~768×800) | **~19 ms** | ~0.9 s |
+| palmprint (~850×1750) | **~86 ms** | ~2.3 s |
+
+- **GPU strongly recommended** (≈ 45× faster). The model is tiny — ~0.9 M parameters, ~8 MB weights
+  — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
+- **CUDA note:** install a PyTorch build matching your GPU. NVIDIA Blackwell (sm_120) needs a CUDA 13
+  build of PyTorch; older cards work with stock CUDA 12 wheels. CPU works everywhere (slower).
+- **Batching gives no per-image speedup.** `extract_batch` exists for convenience, but the
+  per-image post-processing (non-max suppression + decode) dominates, not the network forward — so
+  to raise throughput, **run more workers/pods** (one model each) rather than larger batches. This
+  is why the web service + horizontal autoscaling is the recommended deployment for high volume.
+
+## Fine-tune on your own data
+
+```bash
+python -m leader.finetune --data /path/db1 /path/db2 --out my_leader.pt
+```
+
+Each `--data` dir holds grayscale images with matching `.xml` GT minutiae
+(`<Minutia X=".." Y=".." Angle=".." />`). Defaults reproduce the universal recipe (head +
+refinement decoder, σ=3 Gaussian heatmap, plain BCE, 60 epochs). See [RESULTS.md](RESULTS.md#recipe).
+
+## Verify the port
+
+```bash
+python -m leader.leader_torch    # loads the model and runs a forward pass (parity vs Keras ~1e-6)
+```
+
+## License & attribution
+
+Apache-2.0 (see [LICENSE](LICENSE)). The PyTorch port and fine-tuned weights derive from **PyFing /
+LEADER** (© 2023 R. Cappelli, MIT); that MIT notice is retained in [NOTICE](NOTICE). Benchmark
+comparisons cite FingerNet and MinutiaeNet (© 2017 D.-L. Nguyen, MIT) for context only.
