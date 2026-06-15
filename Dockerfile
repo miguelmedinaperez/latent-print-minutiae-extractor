@@ -1,5 +1,7 @@
 # CPU image by default (works everywhere). For GPU, see the note at the bottom.
-FROM python:3.11-slim
+# Python 3.12: current stable with full wheel coverage for torch/opencv/fastapi. (3.13 is newer but
+# some CV/torch wheels still lag on it; 3.12 matches the dev container and is the safe recent choice.)
+FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app

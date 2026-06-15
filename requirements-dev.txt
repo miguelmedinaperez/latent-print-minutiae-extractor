@@ -1,0 +1,4 @@
+# Test/dev dependencies (the runtime ones are in requirements.txt).
+-r requirements.txt
+pytest>=7
+httpx          # for FastAPI's starlette TestClient (service tests)

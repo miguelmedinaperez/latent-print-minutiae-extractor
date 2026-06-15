@@ -8,6 +8,14 @@ see [RESULTS.md](RESULTS.md).
 One model handles both print types; the weights (~8 MB) ship in this repo, so it runs out of the box
 on CPU or GPU.
 
+> **Built on PyFing's LEADER.** This project is a PyTorch port and a fingerprint/palmprint *fine-tune*
+> of **LEADER** (Lightweight End-to-end Attention-gated Dual autoencodER), the minutiae extractor by
+> **Raffaele Cappelli** (University of Bologna), distributed in the
+> [PyFing](https://github.com/raffaele-cappelli/pyfing) library (© 2023, MIT). The base architecture
+> and pretrained weights are entirely the PyFing authors' work — all credit for them goes there. This
+> repo adds only the PyTorch port, the fine-tuning, and the serving layer. Please **cite PyFing /
+> LEADER** if you use this (see [Credits & citation](#license--attribution)).
+
 ## Install
 
 ```bash
@@ -101,8 +109,28 @@ refinement decoder, σ=3 Gaussian heatmap, plain BCE, 60 epochs). See [RESULTS.m
 python -m leader.leader_torch    # loads the model and runs a forward pass (parity vs Keras ~1e-6)
 ```
 
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q                         # CPU-only smoke tests: port loads, extraction is well-formed,
+                                  # deterministic, single==batch, and the FastAPI endpoints respond
+```
+
+The suite (in `tests/`) is hardware-independent (runs on CPU) and asserts the API *contract*, not a
+specific minutia count. The service tests skip automatically if the optional `httpx` dep is missing.
+
 ## License & attribution
 
-Apache-2.0 (see [LICENSE](LICENSE)). The PyTorch port and fine-tuned weights derive from **PyFing /
-LEADER** (© 2023 R. Cappelli, MIT); that MIT notice is retained in [NOTICE](NOTICE). Benchmark
-comparisons cite FingerNet and MinutiaeNet (© 2017 D.-L. Nguyen, MIT) for context only.
+Apache-2.0 (see [LICENSE](LICENSE)).
+
+**Credits — the base model.** The architecture and pretrained weights are **LEADER** (Lightweight
+End-to-end Attention-gated Dual autoencodER) by **Raffaele Cappelli** (University of Bologna),
+shipped in the **[PyFing](https://github.com/raffaele-cappelli/pyfing)** library (© 2023, MIT). This
+repository only **ports it to PyTorch** and **fine-tunes** it on latent fingerprints and palmprints;
+all credit for the underlying detector belongs to the PyFing authors. The MIT notice is retained in
+[NOTICE](NOTICE). If you use this work, please cite **PyFing / LEADER** (Cappelli, *LEADER*,
+arXiv:2602.15493) alongside this repository.
+
+Benchmark comparisons in [RESULTS.md](RESULTS.md) additionally cite FingerNet and MinutiaeNet
+(© 2017 D.-L. Nguyen, MIT) for context only — no code or weights from those projects are included.
