@@ -1,7 +1,7 @@
 # Results — fine-tuned universal LEADER on latent fingerprints & palmprints
 
 Held-out, **subject-disjoint 5-fold cross-validation**. The fine-tuned models are evaluated only on
-images whose subjects were held out of training; the stock baselines trained on none of these
+images whose subjects were held out of training; the baseline detectors trained on none of these
 images, so the comparison is fair.
 
 **Metrics.** **AP** = area under the confidence-ranked per-image precision–recall curve;
@@ -12,7 +12,7 @@ Per-column best is **bold**.
 **Datasets.** *SD27* (258) and *LPIDB* (380) are public latent benchmarks; *Internal palm set* (73)
 and *Internal fingerprint set* (284) are proprietary in-house latent collections.
 
-> "PyFing" is the **stock** LEADER model; "fine-tuned LEADER" is **one universal** model (this repo)
+> "PyFing" is the **original** LEADER model; "fine-tuned LEADER" is **one universal** model (this repo)
 > evaluated per dataset. The fine-tuned FingerNet rows are two separate domain-specific models,
 > shown for context.
 
@@ -20,9 +20,9 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 
 | method | loc AP | loc F1 | +ang AP | +ang F1 |
 |---|---|---|---|---|
-| stock FingerNet | 0.570 | 0.685 | 0.562 | 0.681 |
+| FingerNet | 0.570 | 0.685 | 0.562 | 0.681 |
 | MinutiaeNet | 0.164 | 0.374 | 0.059 | 0.220 |
-| PyFing (stock LEADER) | 0.559 | 0.665 | 0.545 | 0.661 |
+| PyFing (LEADER) | 0.559 | 0.665 | 0.545 | 0.661 |
 | fine-tuned FingerNet | 0.618 | **0.697** | 0.611 | **0.693** |
 | **fine-tuned LEADER (universal)** | **0.645** | 0.689 | **0.634** | 0.686 |
 
@@ -30,9 +30,9 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 
 | method | loc AP | loc F1 | +ang AP | +ang F1 |
 |---|---|---|---|---|
-| stock FingerNet | 0.607 | 0.698 | 0.600 | 0.694 |
+| FingerNet | 0.607 | 0.698 | 0.600 | 0.694 |
 | MinutiaeNet | 0.202 | 0.400 | 0.076 | 0.233 |
-| PyFing (stock LEADER) | 0.680 | 0.732 | 0.669 | 0.729 |
+| PyFing (LEADER) | 0.680 | 0.732 | 0.669 | 0.729 |
 | fine-tuned FingerNet | 0.636 | 0.715 | 0.630 | 0.711 |
 | **fine-tuned LEADER (universal)** | **0.718** | **0.750** | **0.710** | **0.747** |
 
@@ -40,9 +40,9 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 
 | method | loc AP | loc F1 | +ang AP | +ang F1 |
 |---|---|---|---|---|
-| stock FingerNet | 0.416 | 0.633 | 0.406 | 0.624 |
+| FingerNet | 0.416 | 0.633 | 0.406 | 0.624 |
 | **MinutiaeNet** | **0.574** | **0.759** | 0.431 | **0.652** |
-| PyFing (stock LEADER) | 0.174 | 0.513 | 0.163 | 0.508 |
+| PyFing (LEADER) | 0.174 | 0.513 | 0.163 | 0.508 |
 | fine-tuned FingerNet | 0.496 | 0.631 | **0.481** | 0.622 |
 | fine-tuned LEADER (universal) | 0.497 | 0.610 | 0.476 | 0.600 |
 
@@ -50,9 +50,9 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 
 | method | loc AP | loc F1 | +ang AP | +ang F1 |
 |---|---|---|---|---|
-| stock FingerNet | 0.581 | 0.723 | 0.570 | 0.714 |
+| FingerNet | 0.581 | 0.723 | 0.570 | 0.714 |
 | MinutiaeNet | 0.305 | 0.526 | 0.114 | 0.305 |
-| PyFing (stock LEADER) | 0.681 | 0.745 | 0.664 | 0.739 |
+| PyFing (LEADER) | 0.681 | 0.745 | 0.664 | 0.739 |
 | fine-tuned FingerNet | 0.663 | 0.737 | 0.650 | 0.730 |
 | **fine-tuned LEADER (universal)** | **0.723** | **0.765** | **0.707** | **0.759** |
 
@@ -61,7 +61,7 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 - **The fine-tuned universal LEADER is the best detector on 3 of 4 datasets** — Internal palm set
   (0.645), LPIDB (0.718), Internal fingerprint set (0.723) — with **one model** for both
   fingerprints and palms.
-- It transforms LEADER on **SD27** (stock 0.174 → 0.497 loc AP, +0.32); there it is 2nd behind
+- It transforms LEADER on **SD27** (original 0.174 → 0.497 loc AP, +0.32); there it is 2nd behind
   **MinutiaeNet** (0.574) on detection.
 - It pools fingerprints + palms **cleanly** — the universal model matches per-domain specialists
   (no dilution).

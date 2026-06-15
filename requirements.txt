@@ -4,3 +4,4 @@ opencv-python-headless
 fastapi
 uvicorn[standard]
 python-multipart
+matplotlib  # optional, for leader.viz

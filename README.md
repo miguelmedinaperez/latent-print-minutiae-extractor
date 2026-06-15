@@ -69,7 +69,7 @@ Per-image latency on an NVIDIA RTX 5080 (Blackwell) and on CPU:
 - **fp16 is on by default on GPU** (`MinutiaeExtractor(half=True)`): ~25 % faster and the detected
   minutiae are unchanged (verified — 100 % position overlap vs fp32). Pass `half=False` to disable.
 - **CUDA note:** install a PyTorch build matching your GPU. NVIDIA Blackwell (sm_120) needs a CUDA 13
-  build of PyTorch; older cards work with stock CUDA 12 wheels. CPU works everywhere (slower).
+  build of PyTorch; older cards work with standard CUDA 12 wheels. CPU works everywhere (slower).
 - **Batching does *not* speed things up — scale out instead.** `extract_batch` exists for
   convenience, but a single full-resolution forward already **saturates the GPU**, so per-image time
   is flat regardless of batch size (measured: ~12 ms/img from batch 1 to 32). This is inherent to
