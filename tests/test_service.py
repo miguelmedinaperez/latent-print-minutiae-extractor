@@ -1,21 +1,21 @@
-"""FastAPI service tests. Skipped automatically if fastapi's TestClient deps (httpx) are absent.
+"""FastAPI service tests. Skipped automatically if starlette's TestClient deps (httpx) are absent.
 
-Forces the extractor onto CPU before the service module imports it, so these run without a GPU.
+The service's extractor is forced onto CPU and its forward is replaced by a single known detection
+peak (see conftest.inject_one_peak_forward), so the endpoint assertions check a real, non-empty,
+deterministic result instead of passing vacuously on an empty list.
 """
-import os
-
 import cv2 as cv
 import numpy as np
 import pytest
 
-os.environ.setdefault("LEADER_DEVICE", "cpu")   # honored by service if it reads it; harmless otherwise
+from conftest import inject_one_peak_forward
 
-starlette_testclient = pytest.importorskip("starlette.testclient")
+pytest.importorskip("starlette.testclient")
+from starlette.testclient import TestClient   # noqa: E402
 
 
 @pytest.fixture(scope="module")
-def client(monkeypatch_session=None):
-    # Build the extractor on CPU regardless of host, then import the app.
+def client():
     import leader
     _orig = leader.MinutiaeExtractor
 
@@ -27,9 +27,11 @@ def client(monkeypatch_session=None):
     leader.MinutiaeExtractor = _cpu_extractor
     try:
         from service.app import app
+        import service.app as appmod
+        inject_one_peak_forward(appmod.extractor)        # deterministic single-peak forward
     finally:
         leader.MinutiaeExtractor = _orig
-    return starlette_testclient.TestClient(app)
+    return TestClient(app)
 
 
 def _png_bytes():
@@ -46,7 +48,7 @@ def test_health(client):
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    assert "device" in body
+    assert body["device"] == "cpu"
 
 
 def test_extract_endpoint(client):
@@ -54,8 +56,9 @@ def test_extract_endpoint(client):
     assert r.status_code == 200
     body = r.json()
     assert body["image"] == "latent.png"
+    assert body["count"] == 1                            # injected single peak → non-vacuous
     assert body["count"] == len(body["minutiae"])
-    assert isinstance(body["minutiae"], list)
+    assert set(body["minutiae"][0]) == {"x", "y", "angle", "quality"}
 
 
 def test_extract_batch_endpoint(client):
@@ -65,4 +68,5 @@ def test_extract_batch_endpoint(client):
     assert r.status_code == 200
     results = r.json()["results"]
     assert len(results) == 2
-    assert results[0]["count"] == results[1]["count"]   # identical inputs → identical counts
+    assert results[0]["count"] == 1 and results[1]["count"] == 1
+    assert results[0]["minutiae"] == results[1]["minutiae"]   # identical inputs → identical output
