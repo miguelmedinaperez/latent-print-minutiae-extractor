@@ -59,15 +59,22 @@ independently — so it scales horizontally. A Kubernetes Deployment + Service +
 
 Per-image latency on an NVIDIA RTX 5080 (Blackwell) and on CPU:
 
-| | GPU fp16 (default) | GPU fp32 | CPU |
+| | GPU fp16 (default) | GPU fp16 + compile | CPU |
 |---|---|---|---|
-| fingerprint (~768×800) | **~12 ms** | ~16 ms | ~0.9 s |
-| palmprint (~850×1750) | **~30 ms** | ~41 ms | ~2.4 s |
+| fingerprint (~768×800) | **~13 ms** | **~5 ms** | ~0.9 s |
+| palmprint (~850×1750) | **~30 ms** | (per-size compile) | ~2.4 s |
 
 - **GPU strongly recommended** (≈ 75× faster than CPU). The model is tiny — ~0.9 M parameters,
   ~8 MB weights — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
 - **fp16 is on by default on GPU** (`MinutiaeExtractor(half=True)`): ~25 % faster and the detected
-  minutiae are unchanged (verified — 100 % position overlap vs fp32). Pass `half=False` to disable.
+  minutiae are unchanged — verified for **both positions (100 % overlap) and angles** (Δ median
+  0.04°) vs fp32. Pass `half=False` to disable.
+- **CUDA graphs give ~2.5× more** (`MinutiaeExtractor(compile=True)`): `torch.compile`'s
+  `reduce-overhead` mode captures the network's launch sequence into a replay graph — 13 ms → ~5 ms,
+  **identical minutiae**. The model is launch-bound, so this is the biggest lever. Caveat: it
+  recompiles per input *size* (~1 min warmup each), so it pays off for fixed-size / high-volume
+  same-size workloads. (fp8/NVFP4 do **not** help: cuDNN has no fp8/fp4 *conv* kernels — those
+  formats target matmul/transformers, not this conv U-Net.)
 - **CUDA note:** install a PyTorch build matching your GPU. NVIDIA Blackwell (sm_120) needs a CUDA 13
   build of PyTorch; older cards work with standard CUDA 12 wheels. CPU works everywhere (slower).
 - **Batching does *not* speed things up — scale out instead.** `extract_batch` exists for

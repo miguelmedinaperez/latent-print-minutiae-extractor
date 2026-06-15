@@ -147,6 +147,7 @@ class LeaderTorch(nn.Module):
         """LEADER NMS -> list of (x,y,angle,type,quality) per the Keras _get_minutiae.
         Vectorized decode: per image, gather all minutiae values in ONE GPU->CPU transfer (instead
         of per-minutia scalar reads), so the decode (~0.3 ms) never bottlenecks batched inference."""
+        pos, dir2, typ = pos.float(), dir2.float(), typ.float()   # NMS in fp32 (robust to fp16/bf16 forward)
         gb = F.conv2d(pos, self.gblur, padding=2)
         mx = F.max_pool2d(gb, 7, stride=1, padding=3)
         nms = (gb * (gb == mx).float())[:, 0]                 # (B,H,W)

@@ -25,21 +25,26 @@ def _pad32(img, value):
 
 
 class MinutiaeExtractor:
-    def __init__(self, weights_dir=_W, finetuned="leader_universal_deploy.pt", device=None, half=None):
+    def __init__(self, weights_dir=_W, finetuned="leader_universal_deploy.pt", device=None,
+                 half=None, compile=False):
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        # fp16 autocast on GPU: ~25-30% faster, minutiae preserved (verified). Off on CPU.
+        # fp16 autocast on GPU: ~25% faster, minutiae preserved (positions + angles). Off on CPU.
         self.half = (self.device == "cuda") if half is None else half
         self.model = LeaderTorch(str(Path(weights_dir) / "leader_weights.npz"),
                                  str(Path(weights_dir) / "leader_layers.json")).to(self.device).eval()
         ft = Path(weights_dir) / finetuned
         if finetuned and ft.exists():
             self.model.load_state_dict(torch.load(str(ft), map_location=self.device))
+        # opt-in CUDA-graph compile: ~2.5x faster, identical minutiae, BUT recompiles per input size
+        # (best for fixed-size / high-volume same-size workloads; ~1 min warmup on first call).
+        self._fwd = (torch.compile(self.model, mode="reduce-overhead")
+                     if (compile and self.device == "cuda") else self.model)
 
     def _forward(self, x):
         if self.half and self.device == "cuda":
             with torch.autocast("cuda", dtype=torch.float16):
-                return self.model(x)
-        return self.model(x)
+                return self._fwd(x)
+        return self._fwd(x)
 
     @staticmethod
     def _prep(img, dpi):
