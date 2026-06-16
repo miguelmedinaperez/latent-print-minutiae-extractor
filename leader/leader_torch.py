@@ -1,8 +1,9 @@
 """PyTorch port of PyFing/LEADER (Keras) so it can be fine-tuned on the GPU.
 
 Architecture mirrors pyfing.minutiae.Leader._build_model exactly. Each parametrized layer is
-auto-constructed from the dumped Keras weight shapes (data/crops/leader_weights.npz +
-leader_layers.json from scripts/_dump_leader.py); only the forward topology is hand-written.
+auto-constructed from the dumped Keras weight shapes (weights/leader_weights.npz +
+weights/leader_layers.json, produced by tools/dump_leader.py); only the forward topology is
+hand-written.
 
 Heads: pos (1ch sigmoid detection map), dir (2ch cos/sin -> atan2 angle), typ (1ch sigmoid).
 forward() returns the raw head tensors; extract() adds LEADER's NMS (gaussian-blur + 7x7 maxpool

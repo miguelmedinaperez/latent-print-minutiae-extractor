@@ -52,7 +52,14 @@ class MinutiaeExtractor:
 
     def _infer(self, x):
         """Forward, optionally with test-time augmentation: average the pos detection map over the 4
-        flips (un-flipped back); dir/typ from the identity pass. Improves detection AP, esp. on palms."""
+        flips (un-flipped back); dir/typ from the identity pass. Improves detection AP, esp. on palms.
+
+        With ``compile=True`` (CUDA graphs / ``reduce-overhead``) the network's outputs are *views into
+        a static replay buffer* that the NEXT forward overwrites. TTA runs the model 5 times while
+        keeping the accumulator alive across calls, so each detection map must be cloned out of that
+        buffer before the following forward clobbers it — otherwise torch raises
+        "accessing tensor output of CUDAGraphs that has been overwritten by a subsequent run".
+        The single-pass path is safe: its outputs are consumed before any re-invocation."""
         if not self.tta:
             return self._forward(x)
         acc = None
@@ -61,7 +68,7 @@ class MinutiaeExtractor:
                 xx = x
                 if fx: xx = torch.flip(xx, dims=[3])
                 if fy: xx = torch.flip(xx, dims=[2])
-                pos = self._forward(xx)[0]
+                pos = self._forward(xx)[0].clone()      # own the data before the next forward reuses the buffer
                 if fx: pos = torch.flip(pos, dims=[3])
                 if fy: pos = torch.flip(pos, dims=[2])
                 acc = pos if acc is None else acc + pos

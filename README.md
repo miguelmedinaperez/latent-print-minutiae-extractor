@@ -16,6 +16,39 @@ on CPU or GPU.
 > repo adds only the PyTorch port, the fine-tuning, and the serving layer. Please **cite PyFing /
 > LEADER** if you use this (see [Credits & citation](#license--attribution)).
 
+## Why this project
+
+I spent two years working in a small forensic laboratory on a very limited budget. In places like
+that, creativity is what keeps the work moving: you build what you cannot buy, run it on the hardware
+you already have — an ordinary desktop PC — and you measure success not by benchmark scores but by the
+cases you can actually move forward.
+
+Latent fingerprints and palmprints are among the hardest evidence to process. They are partial,
+smudged, and laid over noisy backgrounds — exactly the kind of mark found at a crime scene, and
+exactly the kind that is hard to identify. **Minutiae extraction** — locating the ridge endings and
+bifurcations that make a print unique — is the foundation of any latent examination, and the
+commercial tools that do it well are simply out of reach for many small labs. There, open source is
+not a preference; it is the only realistic path.
+
+This project is my attempt to put a capable, free tool in those labs' hands. It stands on the
+shoulders of the [PyFing](https://github.com/raffaele-cappelli/pyfing) project — I'm grateful to
+**Raffaele Cappelli** and the PyFing authors both for the quality of their **LEADER** model and for
+releasing it openly. With the help of [Claude Code](https://claude.com/claude-code) and an automated
+fine-tuning loop inspired by [Andrej Karpathy's autoresearch](https://github.com/karpathy/autoresearch),
+I fine-tuned LEADER into a single **universal** model for both fingerprints and palmprints that:
+
+- **runs on any consumer hardware** — ~0.9 s per fingerprint / ~2.4 s per palmprint on CPU, and
+  ~13 ms / ~30 ms on a desktop NVIDIA GPU (~5 ms with CUDA-graph compile);
+- **supports NVIDIA Blackwell (sm_120, e.g. RTX 5080)** out of the box, via a single `pip install`;
+- **is highly accurate** — the best detector on 3 of 4 latent benchmarks under held-out,
+  subject-disjoint cross-validation: loc AP **0.731** (fingerprints), **0.711** (palms), **0.767**
+  (public LPIDB), ahead of FingerNet, MinutiaeNet and the original PyFing (full tables in
+  [RESULTS.md](RESULTS.md)); and
+- **deploys in minutes** as Python, a CLI, or a container — with the weights included in the repo.
+
+If you work in, or build for, a forensic lab where the budget is the real constraint, I hope it saves
+you some effort.
+
 ## Install
 
 ```bash
@@ -193,18 +226,19 @@ is a load + forward-pass sanity check.)
 
 ```bash
 pip install -r requirements-dev.txt
-pytest -q                                          # 18 CPU-only tests
-pytest --cov=leader --cov=service --cov-report=term-missing   # coverage (94%)
+pytest -q                                          # 25 CPU-only tests
+pytest --cov=leader --cov=service --cov-report=term-missing   # coverage (96%)
 ```
 
 The suite (in `tests/`) is hardware-independent (runs on CPU) and asserts the API *contract*, not a
 specific minutia count: the PyTorch port loads and matches Keras, the NMS decode recovers a known
 peak, the extract → pad → de-offset → dpi pipeline is exercised with an injected detection map, the
 **CLI** (`leader.infer`) TSV/JSON output, the **visualizer** (`leader.viz`, incl. the angle
-convention), a 1-epoch **fine-tune** round-trip, and the **FastAPI** endpoints. Coverage is **94 %**
-of the runtime code (`leader/` + `service/`); the only runtime file excluded is `leader/dump_leader.py`,
-a build-time Keras→`.npz` weight converter that isn't runtime code (see `.coveragerc`). The service
-tests skip automatically if the optional `httpx` dep is missing.
+convention), the **TTA** detection-map averaging (incl. the CUDA-graph buffer-reuse guard), a
+1-epoch **fine-tune** round-trip, and the **FastAPI** endpoints. Coverage is **96 %** of the runtime
+code (`leader/` + `service/`), which is measured in full — the build-time Keras→`.npz` weight
+converter lives outside the package, in [`tools/dump_leader.py`](tools/dump_leader.py), and isn't
+runtime code. The service tests skip automatically if the optional `httpx` dep is missing.
 
 ## Develop (dev container)
 
