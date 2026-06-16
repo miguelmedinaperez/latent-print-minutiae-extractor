@@ -123,3 +123,19 @@ def test_dpi_resampling_maps_back_in_bounds(injected, synthetic_print):
     assert len(mns) == 1
     h, w = synthetic_print.shape
     assert 0 <= mns[0]["x"] <= w and 0 <= mns[0]["y"] <= h
+
+
+def test_tta_preserves_decode(injected, synthetic_print):
+    """With TTA on, the flip-average + un-flip must still recover the injected centre peak (i.e. the
+    flip/un-flip bookkeeping is correct, not mirrored)."""
+    extractor, theta = injected
+    extractor.tta = True
+    try:
+        mns = extractor.extract(synthetic_print, quality=0.1)
+    finally:
+        extractor.tta = False
+    assert len(mns) == 1
+    m = mns[0]
+    h, w = synthetic_print.shape
+    assert 0 <= m["x"] < w and 0 <= m["y"] < h
+    assert _angle_err(m["angle"], theta) < 0.05

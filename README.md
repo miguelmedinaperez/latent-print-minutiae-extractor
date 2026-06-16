@@ -48,6 +48,9 @@ minutiae = ex.extract(img, dpi=500, quality=0.1)  # [{'x','y','angle','quality'}
 
 # many images in one pass:
 batch = ex.extract_batch([img1, img2, img3], dpi=500)
+
+# test-time augmentation: ~+0.02 loc AP (esp. palms), ~5× forward cost, default off
+ex_tta = MinutiaeExtractor(tta=True)
 ```
 
 ### 3. Web service (container — scales on a GPU cluster)
@@ -101,7 +104,7 @@ python -m leader.finetune --data /path/db1 /path/db2 --out my_leader.pt
 
 Each `--data` dir holds grayscale images with matching `.xml` GT minutiae
 (`<Minutia X=".." Y=".." Angle=".." />`). Defaults reproduce the universal recipe (head +
-refinement decoder, σ=3 Gaussian heatmap, plain BCE, 512 px crops, 60 epochs).
+refinement encoder+decoder, σ=3 Gaussian heatmap, plain BCE, 512 px crops, 60 epochs).
 See [RESULTS.md](RESULTS.md#recipe).
 
 ## Verify the port

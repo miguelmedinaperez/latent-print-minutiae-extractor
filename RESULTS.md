@@ -13,7 +13,8 @@ Per-column best is **bold**.
 and *Internal fingerprint set* (284) are proprietary in-house latent collections.
 
 > "PyFing" is the **original** LEADER model; "fine-tuned LEADER" is **one universal** model (this repo)
-> evaluated per dataset.
+> evaluated per dataset. "+TTA" enables test-time augmentation: detection map averaged over 4 flips
+> (`MinutiaeExtractor(tta=True)`, default off).
 
 ### Palmprints — Internal palm set (73)
 
@@ -22,7 +23,8 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 | FingerNet | 0.570 | 0.685 | 0.562 | 0.681 |
 | MinutiaeNet | 0.164 | 0.374 | 0.059 | 0.220 |
 | PyFing (LEADER) | 0.559 | 0.665 | 0.545 | 0.661 |
-| **fine-tuned LEADER (universal)** | **0.666** | **0.698** | **0.658** | **0.695** |
+| fine-tuned LEADER (universal) | 0.695 | 0.713 | 0.689 | 0.711 |
+| **fine-tuned LEADER (+ TTA)** | **0.711** | **0.727** | **0.704** | **0.724** |
 
 ### Palmprints — LPIDB (380)
 
@@ -31,7 +33,8 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 | FingerNet | 0.607 | 0.698 | 0.600 | 0.694 |
 | MinutiaeNet | 0.202 | 0.400 | 0.076 | 0.233 |
 | PyFing (LEADER) | 0.680 | 0.732 | 0.669 | 0.729 |
-| **fine-tuned LEADER (universal)** | **0.739** | **0.758** | **0.731** | **0.755** |
+| fine-tuned LEADER (universal) | 0.758 | 0.770 | 0.751 | 0.767 |
+| **fine-tuned LEADER (+ TTA)** | **0.767** | **0.776** | **0.760** | **0.772** |
 
 ### Latent fingerprints — SD27 (258)
 
@@ -40,7 +43,8 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 | FingerNet | 0.416 | 0.633 | 0.406 | 0.624 |
 | **MinutiaeNet** | **0.574** | **0.759** | 0.431 | **0.652** |
 | PyFing (LEADER) | 0.174 | 0.513 | 0.163 | 0.508 |
-| fine-tuned LEADER (universal) | 0.533 | 0.630 | **0.514** | 0.621 |
+| fine-tuned LEADER (universal) | 0.538 | 0.627 | 0.516 | 0.615 |
+| fine-tuned LEADER (+ TTA) | 0.555 | 0.648 | **0.534** | 0.639 |
 
 ### Latent fingerprints — Internal fingerprint set (284)
 
@@ -49,23 +53,30 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 | FingerNet | 0.581 | 0.723 | 0.570 | 0.714 |
 | MinutiaeNet | 0.305 | 0.526 | 0.114 | 0.305 |
 | PyFing (LEADER) | 0.681 | 0.745 | 0.664 | 0.739 |
-| **fine-tuned LEADER (universal)** | **0.717** | **0.759** | **0.700** | **0.752** |
+| fine-tuned LEADER (universal) | 0.728 | 0.768 | 0.713 | 0.762 |
+| **fine-tuned LEADER (+ TTA)** | **0.731** | **0.772** | **0.717** | **0.767** |
 
 ## Takeaways
 
 - **The fine-tuned universal LEADER is the best detector on 3 of 4 datasets** — Internal palm set
-  (0.666), LPIDB (0.739), Internal fingerprint set (0.717) — with **one model** for both
-  fingerprints and palms.
-- It transforms LEADER on **SD27** (original 0.174 → 0.533 loc AP, +0.36); there it is 2nd behind
-  **MinutiaeNet** (0.574) on detection, and it has the **best loc+angle AP** (0.514).
+  (0.711 with TTA / 0.695 default), LPIDB (0.767 / 0.758), Internal fingerprint set (0.731 / 0.728)
+  — with **one model** for both fingerprints and palms.
+- It transforms LEADER on **SD27** (original 0.174 → 0.538 loc AP, +0.36; 0.555 with TTA); there it
+  is 2nd behind **MinutiaeNet** (0.574) on loc detection, and it has the **best loc+angle AP** (0.534
+  with TTA).
 - It pools fingerprints + palms **cleanly** — the universal model matches per-domain specialists
   (no dilution).
+- **TTA** (`MinutiaeExtractor(tta=True)`) averages the detection map over 4 flips at ~5× forward
+  cost; default-off preserves the fast ~12 ms path. Gains are largest on SD27 (+0.017) and
+  Internal palm (+0.016).
 
 ## Recipe
 
-Fine-tune LEADER's head + refinement decoder; target = Gaussian heatmap (σ=3) at GT minutiae;
-loss = plain BCE on the detection map; **512 px crops** + flips/90°-rotations; Adam 1e-4, 60 epochs.
-Reproduce with `python -m leader.finetune`. Search findings: positive-weighting hurts (plain BCE
-wins), σ=3 is optimal, the decoder must be unfrozen, focal loss underperforms, and **512 px training
-crops beat 320** (more ridge context per sample — confirmed under 5-fold CV: +0.016 pooled fingerprint
-loc AP, and it improves both print types on the universal model with lower variance).
+Fine-tune LEADER's head + refinement **encoder+decoder** (enc1 + dec1 layers; head + head_conv_pos);
+target = Gaussian heatmap (σ=3) at GT minutiae; loss = plain BCE on the detection map; **512 px
+crops** + flips/90°-rotations; Adam 1e-4, 60 epochs. Reproduce with `python -m leader.finetune`.
+Search findings: positive-weighting hurts (plain BCE wins), σ=3 is optimal, the decoder must be
+unfrozen, focal loss underperforms, **512 px training crops beat 320** (more ridge context per sample
+— confirmed under 5-fold CV: +0.016 pooled fingerprint loc AP), and **unfreezing the refinement
+encoder adds +0.012 overall AP** (dominant gain on palms: +0.025, where deeper capacity better models
+complex palm ridge fields).

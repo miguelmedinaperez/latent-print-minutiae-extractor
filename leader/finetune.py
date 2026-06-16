@@ -1,6 +1,6 @@
 """Fine-tune the universal LEADER recipe on your own latent prints (the recipe found by the
-autoresearch sweep: head + refinement-decoder, Gaussian heatmap sigma=3, plain BCE, 512px crops,
-60 epochs).
+autoresearch sweep: head + refinement encoder+decoder, Gaussian heatmap sigma=3, plain BCE,
+512px crops, 60 epochs).
 
     python leader/finetune.py --data /path/to/db1 /path/to/db2 --out my_leader.pt
 
@@ -68,7 +68,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", nargs="+", required=True, help="dirs of images + matching .xml GT")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--unfreeze", default="headdec", choices=["head", "headdec"])
+    ap.add_argument("--unfreeze", default="refine", choices=["head", "headdec", "refine"])
     ap.add_argument("--sigma", type=float, default=3.0); ap.add_argument("--wpos", type=float, default=1.0)
     ap.add_argument("--epochs", type=int, default=60); ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--lr", type=float, default=1e-4); ap.add_argument("--seed", type=int, default=0)
@@ -80,7 +80,11 @@ def main():
 
     W = HERE / "weights"
     model = LeaderTorch(str(W / "leader_weights.npz"), str(W / "leader_layers.json")).to(dev)
-    pref = ("head_0", "head_conv_pos") + (("dec1_0", "dec1_1", "dec1_2", "dec1_3") if a.unfreeze == "headdec" else ())
+    pref = ("head_0", "head_conv_pos")
+    if a.unfreeze in ("headdec", "refine"):
+        pref += ("dec1_0", "dec1_1", "dec1_2", "dec1_3")
+    if a.unfreeze == "refine":
+        pref += ("enc1_0", "enc1_1", "enc1_2", "enc1_3")
     for name, mod in model.L.items():
         tr = any(name.startswith(p) for p in pref)
         for p in mod.parameters():
