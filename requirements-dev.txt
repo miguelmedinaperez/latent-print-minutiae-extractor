@@ -1,5 +1,5 @@
-# Test/dev dependencies (the runtime ones are in requirements.txt).
+# Test/dev dependencies (the runtime ones are in requirements.txt). Pinned to verified versions.
 -r requirements.txt
-pytest>=7
-pytest-cov     # coverage (pytest --cov=leader --cov=service)
-httpx          # for FastAPI's starlette TestClient (service tests)
+pytest==9.1.0
+pytest-cov==7.1.0      # coverage (pytest --cov=leader --cov=service)
+httpx==0.28.1          # for FastAPI's starlette TestClient (service tests)

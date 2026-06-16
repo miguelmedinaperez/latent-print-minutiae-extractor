@@ -20,11 +20,18 @@ on CPU or GPU.
 
 ```bash
 git clone <repo-url> && cd latent-print-minutiae-extractor
-pip install -r requirements.txt          # torch, numpy, opencv, fastapi, uvicorn
+pip install -r requirements.txt          # pinned, reproducible versions (Python 3.12)
 ```
 
-GPU is auto-detected. For an NVIDIA GPU install a CUDA build of PyTorch that matches your card
-(recent cards / Blackwell sm_120 need a CUDA 13 build); otherwise it falls back to CPU.
+Dependencies are **pinned** to the versions verified in CI and the Docker build, so installs are
+reproducible. GPU is auto-detected. **For an NVIDIA GPU, install the *same* `torch` version from the
+CUDA index that matches your card** — recent cards / Blackwell (sm_120) need a CUDA 13 build:
+
+```bash
+pip install torch==2.12.0 --index-url https://download.pytorch.org/whl/cu130   # older cards: a cu12 index
+```
+
+Otherwise it falls back to CPU (the default wheel in `requirements.txt`).
 
 ## Three ways to use it
 
@@ -210,6 +217,12 @@ system libs), installs `requirements-dev.txt`, and forwards port 8000 for the we
 is **CPU** by default; for GPU development, base `.devcontainer/Dockerfile` on a CUDA PyTorch image
 and add `"runArgs": ["--gpus", "all"]` to `devcontainer.json` (see the GPU note in the `Dockerfile`).
 Inside, `pytest -q` runs the suite and `uvicorn service.app:app --reload` serves the API.
+
+**Debug the service in VS Code.** `.vscode/launch.json` ships ready-to-use configs (Python / debugpy
+extension). Open the repo, go to **Run & Debug**, pick **“FastAPI: debug (run service/app.py)”** and
+press **F5** — `service/app.py` runs uvicorn in-process (so breakpoints bind) on
+`http://127.0.0.1:8000`. There's also a **uvicorn `--reload`** config (hot reload, limited breakpoints)
+and a **pytest** config. From a terminal the same entrypoint is `python -m service.app`.
 
 ## License & attribution
 

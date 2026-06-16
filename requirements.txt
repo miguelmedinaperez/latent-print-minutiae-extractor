@@ -1,7 +1,15 @@
-torch>=2.2
-numpy
-opencv-python-headless
-fastapi
-uvicorn[standard]
-python-multipart
-matplotlib  # optional, for leader.viz
+# Runtime dependencies, pinned to the versions verified in CI + the Docker build (reproducible installs).
+#
+# torch is the one exception: pin the VERSION, but choose the BUILD that matches your hardware.
+#   - CPU (and the default Docker image): the wheel below installs from PyPI as-is.
+#   - NVIDIA GPU: install the SAME version from the CUDA index for your card, e.g. (Blackwell / sm_120):
+#       pip install torch==2.12.0 --index-url https://download.pytorch.org/whl/cu130
+#     (older cards: a CUDA 12 index). See the README "Install" / Dockerfile GPU note.
+torch==2.12.0
+numpy==2.4.6
+opencv-python-headless==4.13.0.92
+fastapi==0.137.1
+pydantic==2.13.4            # direct: service.app's /configure Config model
+uvicorn[standard]==0.49.0
+python-multipart==0.0.32
+matplotlib==3.11.0          # leader.viz overlays + the /plot endpoint
