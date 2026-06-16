@@ -1,12 +1,8 @@
 # latent-print-minutiae-extractor
 
-**Minutiae extraction from latent fingerprints *and* palmprints at 500 dpi, with one fine-tuned
-universal model.** A PyTorch port of PyFing's **LEADER** minutiae CNN plus a fine-tuned *universal*
-model that is the **best detector on 3 of 4 benchmarks** (held-out, subject-disjoint 5-fold CV) —
-see [RESULTS.md](RESULTS.md).
+**Minutiae extraction from latent fingerprints *and* palmprints at 500 dpi, with one fine-tuned universal model.** A PyTorch port of PyFing's **LEADER** minutiae CNN plus a fine-tuned *universal* model that is the **best detector on 3 of 4 benchmarks** (held-out, subject-disjoint 5-fold CV) — see [RESULTS.md](RESULTS.md).
 
-One model handles both print types; the weights (~8 MB) ship in this repo, so it runs out of the box
-on CPU or GPU.
+One model handles both print types; the weights (~8 MB) ship in this repo, so it runs out of the box on CPU or GPU.
 
 > **Built on PyFing's LEADER.** This project is a PyTorch port and a fingerprint/palmprint *fine-tune*
 > of **LEADER** (Lightweight End-to-end Attention-gated Dual autoencodER), the minutiae extractor by
@@ -18,32 +14,15 @@ on CPU or GPU.
 
 ## Why this project
 
-I spent two years working in a small forensic laboratory on a very limited budget. In places like
-that, creativity is what keeps the work moving: you build what you cannot buy, run it on the hardware
-you already have — an ordinary desktop PC — and you measure success not by benchmark scores but by the
-cases you can actually move forward.
+I spent two years working in a small forensic laboratory on a very limited budget. In places like that, creativity is the key: you build what you cannot buy, run it on the hardware you already have — an ordinary desktop PC — and you measure success not by benchmark scores but by the cases you can actually solve.
 
-Latent fingerprints and palmprints are among the hardest evidence to process. They are partial,
-smudged, and laid over noisy backgrounds — exactly the kind of mark found at a crime scene, and
-exactly the kind that is hard to identify. **Minutiae extraction** — locating the ridge endings and
-bifurcations that make a print unique — is the foundation of any latent examination, and the
-commercial tools that do it well are simply out of reach for many small labs. There, open source is
-not a preference; it is the only realistic path.
+Latent fingerprints and palmprints are among the hardest evidence to process. They are partial, blurred, and laid over noisy backgrounds. **Minutiae extraction** — locating the ridge endings and bifurcations that make a print unique — is the foundation of any latent examination, and the commercial tools that do it well are simply out of reach for many small labs. There, open source is the only realistic path.
 
-This project is my attempt to put a capable, free tool in those labs' hands. It stands on the
-shoulders of the [PyFing](https://github.com/raffaele-cappelli/pyfing) project — I'm grateful to
-**Raffaele Cappelli** and the PyFing authors both for the quality of their **LEADER** model and for
-releasing it openly. With the help of [Claude Code](https://claude.com/claude-code) and an automated
-fine-tuning loop inspired by [Andrej Karpathy's autoresearch](https://github.com/karpathy/autoresearch),
-I fine-tuned LEADER into a single **universal** model for both fingerprints and palmprints that:
+This project is my attempt to put a capable, free tool in those labs' hands. It stands on the shoulders of the [PyFing](https://github.com/raffaele-cappelli/pyfing) project — I'm grateful to **Raffaele Cappelli** and **Matteo Ferrara** the PyFing authors both for the quality of their **LEADER** model and for releasing it openly. With the help of [Claude Code](https://claude.com/claude-code) and an automated fine-tuning loop inspired by [Andrej Karpathy's autoresearch](https://github.com/karpathy/autoresearch), I fine-tuned LEADER into a single **universal** model for both fingerprints and palmprints that:
 
-- **runs on any consumer hardware** — ~0.9 s per fingerprint / ~2.4 s per palmprint on CPU, and
-  ~13 ms / ~30 ms on a desktop NVIDIA GPU (~5 ms with CUDA-graph compile);
-- **supports NVIDIA Blackwell (sm_120, e.g. RTX 5080)** out of the box, via a single `pip install`;
-- **is highly accurate** — the best detector on 3 of 4 latent benchmarks under held-out,
-  subject-disjoint cross-validation: loc AP **0.731** (fingerprints), **0.711** (palms), **0.767**
-  (public LPIDB), ahead of FingerNet, MinutiaeNet and the original PyFing (full tables in
-  [RESULTS.md](RESULTS.md)); and
+- **runs on any consumer hardware** — ~0.9 s per fingerprint / ~2.4 s per palmprint on CPU, and ~13 ms / ~30 ms on a desktop NVIDIA GPU (~5 ms with CUDA-graph compile);
+- **supports NVIDIA Blackwell (sm_120, e.g. RTX 5080)** out of the box, via a single `pip install`; 
+- **is highly accurate** — the best detector on 3 of 4 latent benchmarks under held-out, subject-disjoint cross-validation: loc AP **0.731** (fingerprints), **0.711** (palms), **0.767** (public LPIDB), ahead of FingerNet, MinutiaeNet and the original PyFing (full tables in [RESULTS.md](RESULTS.md)); and
 - **deploys in minutes** as Python, a CLI, or a container — with the weights included in the repo.
 
 If you work in, or build for, a forensic lab where the budget is the real constraint, I hope it saves
@@ -56,9 +35,7 @@ git clone <repo-url> && cd latent-print-minutiae-extractor
 pip install -r requirements.txt          # pinned, reproducible versions (Python 3.12)
 ```
 
-Dependencies are **pinned** to the versions verified in CI and the Docker build, so installs are
-reproducible. GPU is auto-detected. **For an NVIDIA GPU, install the *same* `torch` version from the
-CUDA index that matches your card** — recent cards / Blackwell (sm_120) need a CUDA 13 build:
+Dependencies are **pinned** to the versions verified in CI and the Docker build, so installs are reproducible. GPU is auto-detected. **For an NVIDIA GPU, install the *same* `torch` version from the CUDA index that matches your card** — recent cards / Blackwell (sm_120) need a CUDA 13 build:
 
 ```bash
 pip install torch==2.12.0 --index-url https://download.pytorch.org/whl/cu130   # older cards: a cu12 index
@@ -124,30 +101,21 @@ curl -F file=@latent.png -F minutiae=@minutiae.tsv http://localhost:8000/plot -o
 | `POST /extract_batch` | `files[]`; query `dpi`, `quality` | `{results: [...]}` |
 | `POST /plot` | `file` + `minutiae` (TSV/JSON) | overlay **PNG** (markers on the confidence scale) |
 
-`tta` and `compile` are **construction settings**, so they're set once via **`POST /configure`** (the
-HTTP form of `MinutiaeExtractor(tta=, compile=)`) — `compile` is GPU-only with a ~1 min warmup per
-input size — while `dpi`/`quality` are per-request. The service is **stateless per request** and
-scales horizontally: for multi-pod deployments set the config at startup via the `LEADER_TTA` /
-`LEADER_COMPILE` env vars (so every pod is consistent), and use `/configure` for single-instance or
-dev overrides. A Kubernetes Deployment + Service + HPA example is in
-[`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
+`tta` and `compile` are **construction settings**, so they're set once via **`POST /configure`** (the HTTP form of `MinutiaeExtractor(tta=, compile=)`) — `compile` is GPU-only with a ~1 min warmup per input size — while `dpi`/`quality` are per-request. The service is **stateless per request** and scales horizontally: for multi-pod deployments set the config at startup via the `LEADER_TTA` / `LEADER_COMPILE` env vars (so every pod is consistent), and use `/configure` for single-instance or dev overrides. A Kubernetes Deployment + Service + HPA example is in [`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
 
 ### 4. Visualize
 
-Overlay the extracted minutiae on the print — a hollow circle + a short direction line per minutia,
-**coloured by confidence** (RdYlGn: red = low → green = high) with a colorbar:
+Overlay the extracted minutiae on the print — a hollow circle + a short direction line per minutia, **coloured by confidence** (RdYlGn: red = low → green = high) with a colorbar:
 
 ```bash
 python -m leader.viz latent.png --out overlay.png --quality 0.1
 ```
 
-(`pip install matplotlib`, included in `requirements.txt`.) The direction line is drawn following the
-angle convention below.
+(`pip install matplotlib`, included in `requirements.txt`.) The direction line is drawn following the angle convention below.
 
 ## Output format & angle convention
 
-Every interface returns the **same minutiae**. The CLI writes **TSV** (one minutia per line); the
-Python API and the web service return the equivalent **JSON** dicts.
+Every interface returns the **same minutiae**. The CLI writes **TSV** (one minutia per line); the Python API and the web service return the equivalent **JSON** dicts.
 
 | field | TSV col | meaning |
 |---|---|---|
@@ -181,26 +149,11 @@ Per-image latency on an NVIDIA RTX 5080 (Blackwell) and on CPU:
 | fingerprint (~768×800) | **~13 ms** | **~5 ms** | ~0.9 s |
 | palmprint (~850×1750) | **~30 ms** | (per-size compile) | ~2.4 s |
 
-- **GPU strongly recommended** (≈ 75× faster than CPU). The model is tiny — ~0.9 M parameters,
-  ~8 MB weights — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
-- **fp16 is on by default on GPU** (`MinutiaeExtractor(half=True)`): ~25 % faster and the detected
-  minutiae are unchanged — verified for **both positions (100 % overlap) and angles** (Δ median
-  0.04°) vs fp32. Pass `half=False` to disable.
-- **CUDA graphs give ~2.5× more** (`MinutiaeExtractor(compile=True)`): `torch.compile`'s
-  `reduce-overhead` mode captures the network's launch sequence into a replay graph — 13 ms → ~5 ms,
-  **identical minutiae**. The model is launch-bound, so this is the biggest lever. Caveat: it
-  recompiles per input *size* (~1 min warmup each), so it pays off for fixed-size / high-volume
-  same-size workloads. (fp8/NVFP4 do **not** help: cuDNN has no fp8/fp4 *conv* kernels — those
-  formats target matmul/transformers, not this conv U-Net.)
-- **CUDA note:** install a PyTorch build matching your GPU. NVIDIA Blackwell (sm_120) needs a CUDA 13
-  build of PyTorch; older cards work with standard CUDA 12 wheels. CPU works everywhere (slower).
-- **Batching does *not* speed things up — scale out instead.** `extract_batch` exists for
-  convenience, but a single full-resolution forward already **saturates the GPU**, so per-image time
-  is flat regardless of batch size (measured: ~12 ms/img from batch 1 to 32). This is inherent to
-  processing at full input resolution — there is no architecture change that adds batch throughput
-  without trading detection accuracy (a smaller/lower-resolution model would). To raise throughput,
-  **run more workers/pods** (one model each); the web service + horizontal autoscaling is the
-  recommended high-volume deployment.
+- **GPU strongly recommended** (≈ 75× faster than CPU). The model is tiny — ~0.9 M parameters, ~8 MB weights — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
+- **fp16 is on by default on GPU** (`MinutiaeExtractor(half=True)`): ~25 % faster and the detected   minutiae are unchanged — verified for **both positions (100 % overlap) and angles** (Δ median 0.04°) vs fp32. Pass `half=False` to disable.
+- **CUDA graphs give ~2.5× more** (`MinutiaeExtractor(compile=True)`): `torch.compile`'s   `reduce-overhead` mode captures the network's launch sequence into a replay graph — 13 ms → ~5 ms,   **identical minutiae**. The model is launch-bound, so this is the biggest lever. Caveat: it recompiles per input *size* (~1 min warmup each), so it pays off for fixed-size / high-volume same-size workloads. (fp8/NVFP4 do **not** help: cuDNN has no fp8/fp4 *conv* kernels — those formats target matmul/transformers, not this conv U-Net.)
+- **CUDA note:** install a PyTorch build matching your GPU. NVIDIA Blackwell (sm_120) needs a CUDA 13 build of PyTorch; older cards work with standard CUDA 12 wheels. CPU works everywhere (slower).
+- **Batching does *not* speed things up — scale out instead.** `extract_batch` exists for convenience, but a single full-resolution forward already **saturates the GPU**, so per-image time is flat regardless of batch size (measured: ~12 ms/img from batch 1 to 32). This is inherent to processing at full input resolution — there is no architecture change that adds batch throughput without trading detection accuracy (a smaller/lower-resolution model would). To raise throughput, **run more workers/pods** (one model each); the web service + horizontal autoscaling is the recommended high-volume deployment.
 
 ## Fine-tune on your own data
 
@@ -208,9 +161,7 @@ Per-image latency on an NVIDIA RTX 5080 (Blackwell) and on CPU:
 python -m leader.finetune --data /path/db1 /path/db2 --out my_leader.pt
 ```
 
-Each `--data` dir holds grayscale images with matching `.xml` GT minutiae
-(`<Minutia X=".." Y=".." Angle=".." />`). Defaults reproduce the universal recipe (head +
-refinement encoder+decoder, σ=3 Gaussian heatmap, plain BCE, 512 px crops, 60 epochs).
+Each `--data` dir holds grayscale images with matching `.xml` GT minutiae (`<Minutia X=".." Y=".." Angle=".." />`). Defaults reproduce the universal recipe (head + refinement encoder+decoder, σ=3 Gaussian heatmap, plain BCE, 512 px crops, 60 epochs).
 See [RESULTS.md](RESULTS.md#recipe).
 
 ## Verify the port
@@ -230,15 +181,7 @@ pytest -q                                          # 25 CPU-only tests
 pytest --cov=leader --cov=service --cov-report=term-missing   # coverage (96%)
 ```
 
-The suite (in `tests/`) is hardware-independent (runs on CPU) and asserts the API *contract*, not a
-specific minutia count: the PyTorch port loads and matches Keras, the NMS decode recovers a known
-peak, the extract → pad → de-offset → dpi pipeline is exercised with an injected detection map, the
-**CLI** (`leader.infer`) TSV/JSON output, the **visualizer** (`leader.viz`, incl. the angle
-convention), the **TTA** detection-map averaging (incl. the CUDA-graph buffer-reuse guard), a
-1-epoch **fine-tune** round-trip, and the **FastAPI** endpoints. Coverage is **96 %** of the runtime
-code (`leader/` + `service/`), which is measured in full — the build-time Keras→`.npz` weight
-converter lives outside the package, in [`tools/dump_leader.py`](tools/dump_leader.py), and isn't
-runtime code. The service tests skip automatically if the optional `httpx` dep is missing.
+The suite (in `tests/`) is hardware-independent (runs on CPU) and asserts the API *contract*, not a specific minutia count: the PyTorch port loads and matches Keras, the NMS decode recovers a known peak, the extract → pad → de-offset → dpi pipeline is exercised with an injected detection map, the **CLI** (`leader.infer`) TSV/JSON output, the **visualizer** (`leader.viz`, incl. the angle convention), the **TTA** detection-map averaging (incl. the CUDA-graph buffer-reuse guard), a 1-epoch **fine-tune** round-trip, and the **FastAPI** endpoints. Coverage is **96 %** of the runtime code (`leader/` + `service/`), which is measured in full — the build-time Keras→`.npz` weight converter lives outside the package, in [`tools/dump_leader.py`](tools/dump_leader.py), and isn't runtime code. The service tests skip automatically if the optional `httpx` dep is missing.
 
 ## Develop (dev container)
 
@@ -272,12 +215,7 @@ and a **pytest** config. From a terminal the same entrypoint is `python -m servi
 Apache-2.0 (see [LICENSE](LICENSE)).
 
 **Credits — the base model.** The architecture and pretrained weights are **LEADER** (Lightweight
-End-to-end Attention-gated Dual autoencodER) by **Raffaele Cappelli** (University of Bologna),
-shipped in the **[PyFing](https://github.com/raffaele-cappelli/pyfing)** library (© 2023, MIT). This
-repository only **ports it to PyTorch** and **fine-tunes** it on latent fingerprints and palmprints;
-all credit for the underlying detector belongs to the PyFing authors. The MIT notice is retained in
-[NOTICE](NOTICE). If you use this work, please cite **PyFing / LEADER** (Cappelli, *LEADER*,
+End-to-end Attention-gated Dual autoencodER) by **Raffaele Cappelli** and **Matteo Ferrara**  (University of Bologna), shipped in the **[PyFing](https://github.com/raffaele-cappelli/pyfing)** library (© 2023, MIT). This repository only **ports it to PyTorch** and **fine-tunes** it on latent fingerprints and palmprints; all credit for the underlying detector belongs to the PyFing authors. The MIT notice is retained in [NOTICE](NOTICE). If you use this work, please cite **PyFing / LEADER** (Cappelli, *LEADER*,
 arXiv:2602.15493) alongside this repository.
 
-Benchmark comparisons in [RESULTS.md](RESULTS.md) additionally cite FingerNet and MinutiaeNet
-(© 2017 D.-L. Nguyen, MIT) for context only — no code or weights from those projects are included.
+Benchmark comparisons in [RESULTS.md](RESULTS.md) additionally cite FingerNet and MinutiaeNet (© 2017 D.-L. Nguyen, MIT) for context only — no code or weights from those projects are included.

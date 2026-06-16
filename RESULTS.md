@@ -16,6 +16,18 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 > evaluated per dataset. "+TTA" enables test-time augmentation: detection map averaged over 4 flips
 > (`MinutiaeExtractor(tta=True)`, default off).
 
+**Protocol — full image, no segmentation mask.** All numbers here are computed on the **entire latent
+image with no segmentation-mask cropping**, using confidence-ranked AP / max-F1. This matters for
+**SD27**: the LEADER paper (Cappelli & Ferrara, [arXiv:2602.15493](https://arxiv.org/abs/2602.15493))
+instead **crops each image to the ground-truth-mask ridge bounding box and removes a 14 px border**,
+and reports optimal-point F1 — under *that* protocol the original LEADER is the **best** SD27 detector
+(F1 0.71, zero-shot). LEADER has **no internal segmentation**, so on a full latent (large crime-scene
+background) it emits background false positives that AP penalises heavily, whereas FingerNet and
+MinutiaeNet survive because they segment internally. That is the main reason **stock "PyFing (LEADER)"
+SD27 loc AP reads 0.174 here** rather than ~0.71. These rows therefore measure the **unmasked,
+full-image regime** — what a real deployment sees — and are **not directly comparable** to the paper's
+mask-cropped numbers.
+
 ### Palmprints — Internal palm set (73)
 
 | method | loc AP | loc F1 | +ang AP | +ang F1 |
@@ -61,9 +73,9 @@ and *Internal fingerprint set* (284) are proprietary in-house latent collections
 - **The fine-tuned universal LEADER is the best detector on 3 of 4 datasets** — Internal palm set
   (0.711 with TTA / 0.695 default), LPIDB (0.767 / 0.758), Internal fingerprint set (0.731 / 0.728)
   — with **one model** for both fingerprints and palms.
-- It transforms LEADER on **SD27** (original 0.174 → 0.538 loc AP, +0.36; 0.555 with TTA); there it
-  is 2nd behind **MinutiaeNet** (0.574) on loc detection, and it has the **best loc+angle AP** (0.534
-  with TTA).
+- It transforms LEADER on **SD27** (original 0.174 → 0.538 loc AP, +0.36; 0.555 with TTA) — both
+  full-image, no segmentation (see **Protocol** above); there it is 2nd behind **MinutiaeNet** (0.574)
+  on loc detection, and it has the **best loc+angle AP** (0.534 with TTA).
 - It pools fingerprints + palms **cleanly** — the universal model matches per-domain specialists
   (no dilution).
 - **TTA** (`MinutiaeExtractor(tta=True)`) averages the detection map over 4 flips at ~5× forward
