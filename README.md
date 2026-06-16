@@ -69,6 +69,9 @@ docker compose up --build              # one command: builds + serves on http://
 # or, by hand:
 docker build -t latent-print-minutiae-extractor .
 docker run -p 8000:8000 latent-print-minutiae-extractor    # default image is CPU
+# GPU image (cu130 = Blackwell/sm_120; older cards: a cu12x index), run with the NVIDIA runtime:
+docker build --build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130 -t mnx:gpu .
+docker run --gpus all -p 8000:8000 mnx:gpu                 # /health then reports "device":"cuda"
 
 # (optional) initialize the extractor — set TTA / CUDA-graph compile once:
 curl -X POST http://localhost:8000/configure -H "Content-Type: application/json" -d '{"tta": true, "compile": false}'
@@ -213,10 +216,16 @@ one click:
 - **CLI:** `devcontainer up --workspace-folder .` (`npm i -g @devcontainers/cli`).
 
 It builds [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) (Python 3.12 + the OpenCV/matplotlib
-system libs), installs `requirements-dev.txt`, and forwards port 8000 for the web service. The image
-is **CPU** by default; for GPU development, base `.devcontainer/Dockerfile` on a CUDA PyTorch image
-and add `"runArgs": ["--gpus", "all"]` to `devcontainer.json` (see the GPU note in the `Dockerfile`).
-Inside, `pytest -q` runs the suite and `uvicorn service.app:app --reload` serves the API.
+system libs), installs `requirements-dev.txt`, and forwards port 8000 for the web service. Inside,
+`pytest -q` runs the suite and `uvicorn service.app:app --reload` serves the API.
+
+**GPU is automatic.** The container requests the host GPU (`hostRequirements.gpu`), and on first
+create [`.devcontainer/gpu-setup.sh`](.devcontainer/gpu-setup.sh) detects it and swaps the CPU torch
+for the matching **CUDA build** (cu130 — supports Blackwell / sm_120; older cards: set
+`TORCH_INDEX_URL` to a cu12x index). On a CPU-only host it's a no-op. After “Reopen in Container”,
+`GET /health` should report `"device":"cuda"`; if it still says `cpu`, your tooling didn't pass the
+GPU — add `"runArgs": ["--gpus", "all"]` to `devcontainer.json` and rebuild. (If `device:cpu`
+persists, it's one of: no GPU passthrough, or a CPU torch build — `gpu-setup.sh` prints which.)
 
 **Debug the service in VS Code.** `.vscode/launch.json` ships ready-to-use configs (Python / debugpy
 extension). Open the repo, go to **Run & Debug**, pick **“FastAPI: debug (run service/app.py)”** and

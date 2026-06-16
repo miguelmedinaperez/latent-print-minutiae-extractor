@@ -5,16 +5,22 @@ FROM python:3.12.10-slim
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+# Install torch first from a selectable index so the SAME Dockerfile builds CPU or GPU images.
+#   CPU (default): PyPI wheel.   GPU: pass a CUDA index (the cu13 wheels bundle the CUDA runtime, so
+#   no CUDA base image is needed) — for Blackwell/sm_120 use cu130, older cards a cu12x index:
+#     docker build --build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130 -t mnx:gpu .
+ARG TORCH_INDEX_URL=https://pypi.org/simple
+RUN pip install --no-cache-dir torch==2.12.0 --index-url ${TORCH_INDEX_URL}
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt    # torch already satisfied → not re-fetched
 COPY leader/ ./leader/
 COPY service/ ./service/
 EXPOSE 8000
 # One model per worker; scale by running more pods (k8s) rather than many workers per pod.
 CMD ["uvicorn", "service.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
 
-# --- GPU build ---------------------------------------------------------------
-# The app auto-uses CUDA when available. For a GPU image, base on a CUDA-enabled
-# PyTorch (e.g. FROM pytorch/pytorch:2.x-cuda12.x-cudnn9-runtime) and skip the torch
-# line in requirements; for NVIDIA Blackwell (sm_120) use a torch built with CUDA 13.
-# Run with:  docker run --gpus all -p 8000:8000 <image>
+# --- GPU image ---------------------------------------------------------------
+# Build with the CUDA torch index (above) and run with the NVIDIA runtime:
+#   docker build --build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130 -t mnx:gpu .
+#   docker run --gpus all -p 8000:8000 mnx:gpu        # GET /health then reports "device":"cuda"
+# The app auto-uses CUDA when torch sees it; fp16 + compile become available.
