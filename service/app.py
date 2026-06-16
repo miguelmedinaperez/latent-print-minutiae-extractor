@@ -116,3 +116,8 @@ async def plot(file: UploadFile = File(...), minutiae: UploadFile = File(...)):
     mns = _parse_minutiae(await minutiae.read(), minutiae.filename or "")
     png = overlay_png(img, mns, f"{file.filename} — {len(mns)} minutiae")
     return Response(content=png, media_type="image/png")
+
+
+if __name__ == "__main__":      # debug entrypoint: `python -m service.app` (or F5 — see .vscode/launch.json)
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

@@ -1,0 +1,38 @@
+{
+  // Debug configs for VS Code (Python / debugpy extension). Pick one in the Run & Debug panel, F5.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Run service/app.py directly (its __main__ starts uvicorn in-process -> breakpoints bind).
+      // PYTHONPATH=workspace root so `from leader import ...` resolves when running the file.
+      "name": "FastAPI: debug (run service/app.py)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/service/app.py",
+      "cwd": "${workspaceFolder}",
+      "env": { "PYTHONPATH": "${workspaceFolder}" },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      // Dev server with hot reload. NOTE: --reload spawns a worker subprocess, so breakpoints may not
+      // bind — use the config above for breakpoint debugging.
+      "name": "FastAPI: uvicorn --reload (dev)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["service.app:app", "--reload", "--host", "127.0.0.1", "--port", "8000"],
+      "cwd": "${workspaceFolder}",
+      "justMyCode": false
+    },
+    {
+      "name": "pytest (tests/)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-q", "tests"],
+      "cwd": "${workspaceFolder}",
+      "justMyCode": false
+    }
+  ]
+}
