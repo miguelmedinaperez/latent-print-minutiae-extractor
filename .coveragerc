@@ -1,0 +1,14 @@
+# Coverage config. We target the runtime/deploy code (the model, the Python API, the CLI, the
+# visualizer, and the web service). `leader/dump_leader.py` is a one-off BUILD-TIME tool that
+# converts the original Keras LEADER weights to the shipped .npz; it imports TensorFlow/Keras
+# (absent in CI) and produced the weights that already ship, so it is not runtime code and is
+# excluded from the coverage target.
+[run]
+omit =
+    leader/dump_leader.py
+    tests/*
+
+[report]
+show_missing = True
+exclude_also =
+    if __name__ == .__main__.:

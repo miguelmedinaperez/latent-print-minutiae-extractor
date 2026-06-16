@@ -4,3 +4,7 @@ __pycache__/
 minutiae_superset/weights/*.pt
 *.egg-info/
 .venv/
+.coverage
+.pytest_cache/
+htmlcov/
+overlay.png

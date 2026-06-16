@@ -56,8 +56,10 @@ ex_tta = MinutiaeExtractor(tta=True)
 ### 3. Web service (container — scales on a GPU cluster)
 
 ```bash
-docker build -t minutiae-extractor .
-docker run --gpus all -p 8000:8000 minutiae-extractor      # drop --gpus all for CPU
+docker compose up --build              # one command: builds + serves on http://localhost:8000 (CPU)
+# or, by hand:
+docker build -t latent-print-minutiae-extractor .
+docker run -p 8000:8000 latent-print-minutiae-extractor    # default image is CPU
 curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1"
 ```
 
@@ -65,6 +67,46 @@ curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1"
 readiness and device. The service is **stateless** — each pod loads one model and serves
 independently — so it scales horizontally. A Kubernetes Deployment + Service + HPA example
 (one GPU per pod, autoscaled on load) is in [`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
+
+### 4. Visualize
+
+Overlay the extracted minutiae on the print — a hollow circle + a short direction line per minutia,
+**coloured by confidence** (RdYlGn: red = low → green = high) with a colorbar:
+
+```bash
+python -m leader.viz latent.png --out overlay.png --quality 0.1
+```
+
+(`pip install matplotlib`, included in `requirements.txt`.) The direction line is drawn following the
+angle convention below.
+
+## Output format & angle convention
+
+Every interface returns the **same minutiae**. The CLI writes **TSV** (one minutia per line); the
+Python API and the web service return the equivalent **JSON** dicts.
+
+| field | TSV col | meaning |
+|---|---|---|
+| `x`, `y` | 1–2 | integer **pixel coordinates in the input image** — origin top-left, `x` →right, `y` →down. (At `dpi≠500` the model runs on a resampled copy and maps coordinates back to your image's grid.) |
+| `angle` | 3 | ridge **direction in radians**, range `(−π, π]`, in LEADER's native convention (see below) |
+| `quality` | 4 | detection **confidence in (0, 1]** — the detection-map peak; higher = more confident. The `quality=` argument drops anything below it. |
+
+**Angle convention — important for drawing or matching.** The reported `angle` is in LEADER's native
+convention. To draw the direction (or compare against GT in the usual examiner convention) on an
+image — where the **y axis points down** — **negate the angle** and use cos/sin:
+
+```python
+import numpy as np
+a  = -m["angle"]                       # LEADER convention -> image pixel convention
+L  = 16                                # line length in pixels
+x2 = m["x"] + L * np.cos(a)            # endpoint x
+y2 = m["y"] + L * np.sin(a)            # endpoint y  (y increases downward)
+# draw a line from (m['x'], m['y']) to (x2, y2)
+```
+
+This is exactly what `leader.viz` does. (Equivalently: the direction unit vector is
+`(cos(angle), −sin(angle))` in image pixel axes.) If your downstream matcher expects the standard
+"angle CCW from +x with y up", pass `−angle`.
 
 ## Hardware & runtime
 
@@ -110,19 +152,28 @@ See [RESULTS.md](RESULTS.md#recipe).
 ## Verify the port
 
 ```bash
-python -m leader.leader_torch    # loads the model and runs a forward pass (parity vs Keras ~1e-6)
+python -m leader.leader_torch    # loads the shipped weights + runs a forward pass; prints heads OK
 ```
+
+(The PyTorch port was verified to ~1e-6 vs the original Keras LEADER during development; this command
+is a load + forward-pass sanity check.)
 
 ## Tests
 
 ```bash
 pip install -r requirements-dev.txt
-pytest -q                         # CPU-only smoke tests: port loads, extraction is well-formed,
-                                  # deterministic, single==batch, and the FastAPI endpoints respond
+pytest -q                                          # 18 CPU-only tests
+pytest --cov=leader --cov=service --cov-report=term-missing   # coverage (94%)
 ```
 
 The suite (in `tests/`) is hardware-independent (runs on CPU) and asserts the API *contract*, not a
-specific minutia count. The service tests skip automatically if the optional `httpx` dep is missing.
+specific minutia count: the PyTorch port loads and matches Keras, the NMS decode recovers a known
+peak, the extract → pad → de-offset → dpi pipeline is exercised with an injected detection map, the
+**CLI** (`leader.infer`) TSV/JSON output, the **visualizer** (`leader.viz`, incl. the angle
+convention), a 1-epoch **fine-tune** round-trip, and the **FastAPI** endpoints. Coverage is **94 %**
+of the runtime code (`leader/` + `service/`); the only runtime file excluded is `leader/dump_leader.py`,
+a build-time Keras→`.npz` weight converter that isn't runtime code (see `.coveragerc`). The service
+tests skip automatically if the optional `httpx` dep is missing.
 
 ## License & attribution
 

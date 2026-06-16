@@ -2,7 +2,7 @@
 autoresearch sweep: head + refinement encoder+decoder, Gaussian heatmap sigma=3, plain BCE,
 512px crops, 60 epochs).
 
-    python leader/finetune.py --data /path/to/db1 /path/to/db2 --out my_leader.pt
+    python -m leader.finetune --data /path/to/db1 /path/to/db2 --out my_leader.pt
 
 Each --data dir holds grayscale images (.bmp/.png/.jpg) with a matching .xml of GT minutiae
 (<Minutia X=".." Y=".." Angle=".." .../>; decimal-comma tolerated). Trains from the shipped PyFing

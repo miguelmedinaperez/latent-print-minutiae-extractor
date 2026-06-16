@@ -1,4 +1,5 @@
 # Test/dev dependencies (the runtime ones are in requirements.txt).
 -r requirements.txt
 pytest>=7
+pytest-cov     # coverage (pytest --cov=leader --cov=service)
 httpx          # for FastAPI's starlette TestClient (service tests)

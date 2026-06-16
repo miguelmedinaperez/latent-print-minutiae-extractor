@@ -58,6 +58,12 @@ def test_weights_present():
         assert (WEIGHTS / f).exists(), f"missing shipped weight file: {f}"
 
 
+def test_port_smoke_check():
+    """`python -m leader.leader_torch` (smoke_check) loads the shipped weights + runs a forward pass."""
+    from leader.leader_torch import smoke_check
+    assert smoke_check() is True
+
+
 def test_forward_heads_shapes_and_finite(model):
     x = torch.zeros(1, 1, 64, 64)        # multiple of 32 → valid input
     with torch.no_grad():
