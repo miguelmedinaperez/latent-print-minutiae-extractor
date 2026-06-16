@@ -40,8 +40,9 @@ class MinutiaeExtractor:
             self.model.load_state_dict(torch.load(str(ft), map_location=self.device))
         # opt-in CUDA-graph compile: ~2.5x faster, identical minutiae, BUT recompiles per input size
         # (best for fixed-size / high-volume same-size workloads; ~1 min warmup on first call).
+        self.compiled = bool(compile and self.device == "cuda")   # GPU-only; introspectable
         self._fwd = (torch.compile(self.model, mode="reduce-overhead")
-                     if (compile and self.device == "cuda") else self.model)
+                     if self.compiled else self.model)
 
     def _forward(self, x):
         if self.half and self.device == "cuda":

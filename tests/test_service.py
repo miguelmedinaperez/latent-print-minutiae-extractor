@@ -49,6 +49,8 @@ def test_health(client):
     body = r.json()
     assert body["status"] == "ok"
     assert body["device"] == "cpu"
+    assert set(body) >= {"status", "device", "tta", "compiled", "half"}   # reports the config
+    assert body["tta"] is False and body["compiled"] is False
 
 
 def test_extract_endpoint(client):
@@ -72,11 +74,20 @@ def test_extract_batch_endpoint(client):
     assert results[0]["minutiae"] == results[1]["minutiae"]   # identical inputs → identical output
 
 
-def test_extract_tta_param(client):
-    r = client.post("/extract", params={"tta": True},
-                    files={"file": ("latent.png", _png_bytes(), "image/png")})
+def test_configure(client):
+    """/configure (re)initializes the extractor and is where tta/compile are set."""
+    import service.app as appmod
+    r = client.post("/configure", json={"tta": True, "compile": False})
     assert r.status_code == 200
-    assert r.json()["count"] == 1            # injected peak is flip-symmetric → survives TTA averaging
+    body = r.json()
+    assert body["tta"] is True and body["compiled"] is False        # compile is GPU-only; CPU host → False
+    assert body["device"] in ("cpu", "cuda") and "half" in body
+    # /configure rebuilt the extractor with a real forward; re-inject the deterministic one and confirm
+    # the configured TTA is honoured by /extract (the flip-symmetric injected peak survives averaging).
+    inject_one_peak_forward(appmod.extractor)
+    r2 = client.post("/extract", files={"file": ("latent.png", _png_bytes(), "image/png")})
+    assert r2.status_code == 200 and r2.json()["count"] == 1
+    assert appmod.extractor.tta is True
 
 
 def test_plot_endpoint_tsv(client):

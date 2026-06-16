@@ -51,11 +51,12 @@ def main():
     ap.add_argument("image"); ap.add_argument("--out", default="overlay.png")
     ap.add_argument("--dpi", type=int, default=500); ap.add_argument("--quality", type=float, default=0.1)
     ap.add_argument("--tta", action="store_true", help="test-time augmentation (~+0.02 AP, ~5x cost)")
+    ap.add_argument("--compile", action="store_true", help="CUDA-graph compile (GPU only; ~1 min warmup)")
     a = ap.parse_args()
     img = cv.imread(a.image, cv.IMREAD_GRAYSCALE)
     if img is None:
         raise SystemExit(f"cannot read {a.image}")
-    mns = MinutiaeExtractor(tta=a.tta).extract(img, dpi=a.dpi, quality=a.quality)
+    mns = MinutiaeExtractor(tta=a.tta, compile=a.compile).extract(img, dpi=a.dpi, quality=a.quality)
     Path(a.out).write_bytes(overlay_png(img, mns, f"{Path(a.image).name} — {len(mns)} minutiae"))
     print(f"{len(mns)} minutiae -> {a.out}")
 

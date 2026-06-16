@@ -33,7 +33,7 @@ GPU is auto-detected. For an NVIDIA GPU install a CUDA build of PyTorch that mat
 ```bash
 python -m leader.infer latent.png --dpi 500 --quality 0.1 --out minutiae.tsv
 python -m leader.infer "prints/*.png" --batch --out-dir out/      # many images
-python -m leader.infer latent.png --tta --out minutiae.tsv        # +TTA (~+0.02 AP, ~5x cost)
+python -m leader.infer latent.png --tta --compile --out minutiae.tsv   # TTA and/or CUDA-graph (GPU)
 # TSV columns:  x   y   angle(rad)   quality
 ```
 
@@ -50,8 +50,9 @@ minutiae = ex.extract(img, dpi=500, quality=0.1)  # [{'x','y','angle','quality'}
 # many images in one pass:
 batch = ex.extract_batch([img1, img2, img3], dpi=500)
 
-# test-time augmentation: ~+0.02 loc AP (esp. palms), ~5× forward cost, default off
-ex_tta = MinutiaeExtractor(tta=True)
+# tta     = test-time augmentation (~+0.02 loc AP, esp. palms; ~5× forward cost)
+# compile = CUDA-graph compile (~2.5× faster on GPU; ~1 min warmup per input size; no-op on CPU)
+ex = MinutiaeExtractor(tta=True, compile=True)     # both default off
 ```
 
 ### 3. Web service (container — scales on a GPU cluster)
@@ -61,17 +62,32 @@ docker compose up --build              # one command: builds + serves on http://
 # or, by hand:
 docker build -t latent-print-minutiae-extractor .
 docker run -p 8000:8000 latent-print-minutiae-extractor    # default image is CPU
-curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1&tta=false"
+
+# (optional) initialize the extractor — set TTA / CUDA-graph compile once:
+curl -X POST http://localhost:8000/configure -H "Content-Type: application/json" -d '{"tta": true, "compile": false}'
+# extract:
+curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1"
 # overlay a minutiae file on its print -> PNG (markers coloured by the confidence scale):
-curl -F file=@latent.png -F minutiae=@minutiae.tsv "http://localhost:8000/plot" -o overlay.png
+curl -F file=@latent.png -F minutiae=@minutiae.tsv http://localhost:8000/plot -o overlay.png
 ```
 
-Endpoints: `POST /extract` (one image) and `POST /extract_batch` (several) return JSON — both take
-`dpi`, `quality`, and `tta` query params; `POST /plot` takes a print **and** a minutiae file
-(the TSV from `/extract`/`leader.infer`, or JSON) and returns the **confidence-coloured overlay PNG**;
-`GET /health` reports readiness and device. The service is **stateless** — each pod loads one model
-and serves independently — so it scales horizontally. A Kubernetes Deployment + Service + HPA example
-(one GPU per pod, autoscaled on load) is in [`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
+**Endpoints** (interactive docs at `/docs`, OpenAPI at `/openapi.json`):
+
+| method · path | parameters | returns |
+|---|---|---|
+| `GET /health` | — | `{status, device, tta, compiled, half}` |
+| `POST /configure` | JSON body `{tta, compile, half}` | (re)initializes the extractor; returns the config |
+| `POST /extract` | `file`; query `dpi`, `quality` | `{image, count, minutiae}` |
+| `POST /extract_batch` | `files[]`; query `dpi`, `quality` | `{results: [...]}` |
+| `POST /plot` | `file` + `minutiae` (TSV/JSON) | overlay **PNG** (markers on the confidence scale) |
+
+`tta` and `compile` are **construction settings**, so they're set once via **`POST /configure`** (the
+HTTP form of `MinutiaeExtractor(tta=, compile=)`) — `compile` is GPU-only with a ~1 min warmup per
+input size — while `dpi`/`quality` are per-request. The service is **stateless per request** and
+scales horizontally: for multi-pod deployments set the config at startup via the `LEADER_TTA` /
+`LEADER_COMPILE` env vars (so every pod is consistent), and use `/configure` for single-instance or
+dev overrides. A Kubernetes Deployment + Service + HPA example is in
+[`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
 
 ### 4. Visualize
 
