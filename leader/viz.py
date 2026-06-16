@@ -7,6 +7,7 @@ LEADER reports angle in its own (-theta) convention; this draws -angle so the di
 follow the ridge flow in image coordinates.
 """
 import argparse
+import io
 from pathlib import Path
 import numpy as np
 import cv2 as cv
@@ -33,18 +34,29 @@ def draw(ax, img, minutiae, title=""):
     plt.colorbar(sm, ax=ax, fraction=0.046, pad=0.02).set_label("confidence", fontsize=8)
 
 
+def overlay_png(img, minutiae, title=""):
+    """Render the confidence-coloured minutiae overlay (+ colorbar) and return it as PNG bytes.
+    Shared by the `leader.viz` CLI and the web service's /plot endpoint."""
+    fig, ax = plt.subplots(figsize=(7, 7))
+    draw(ax, img, minutiae, title)
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=120, bbox_inches="tight")
+    plt.close(fig)
+    return buf.getvalue()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("image"); ap.add_argument("--out", default="overlay.png")
     ap.add_argument("--dpi", type=int, default=500); ap.add_argument("--quality", type=float, default=0.1)
+    ap.add_argument("--tta", action="store_true", help="test-time augmentation (~+0.02 AP, ~5x cost)")
     a = ap.parse_args()
     img = cv.imread(a.image, cv.IMREAD_GRAYSCALE)
     if img is None:
         raise SystemExit(f"cannot read {a.image}")
-    mns = MinutiaeExtractor().extract(img, dpi=a.dpi, quality=a.quality)
-    fig, ax = plt.subplots(figsize=(7, 7))
-    draw(ax, img, mns, f"{Path(a.image).name} — {len(mns)} minutiae")
-    fig.tight_layout(); fig.savefig(a.out, dpi=120, bbox_inches="tight"); plt.close(fig)
+    mns = MinutiaeExtractor(tta=a.tta).extract(img, dpi=a.dpi, quality=a.quality)
+    Path(a.out).write_bytes(overlay_png(img, mns, f"{Path(a.image).name} — {len(mns)} minutiae"))
     print(f"{len(mns)} minutiae -> {a.out}")
 
 

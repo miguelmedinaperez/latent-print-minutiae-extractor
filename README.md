@@ -33,6 +33,7 @@ GPU is auto-detected. For an NVIDIA GPU install a CUDA build of PyTorch that mat
 ```bash
 python -m leader.infer latent.png --dpi 500 --quality 0.1 --out minutiae.tsv
 python -m leader.infer "prints/*.png" --batch --out-dir out/      # many images
+python -m leader.infer latent.png --tta --out minutiae.tsv        # +TTA (~+0.02 AP, ~5x cost)
 # TSV columns:  x   y   angle(rad)   quality
 ```
 
@@ -60,12 +61,16 @@ docker compose up --build              # one command: builds + serves on http://
 # or, by hand:
 docker build -t latent-print-minutiae-extractor .
 docker run -p 8000:8000 latent-print-minutiae-extractor    # default image is CPU
-curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1"
+curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1&tta=false"
+# overlay a minutiae file on its print -> PNG (markers coloured by the confidence scale):
+curl -F file=@latent.png -F minutiae=@minutiae.tsv "http://localhost:8000/plot" -o overlay.png
 ```
 
-`POST /extract` (one image) and `POST /extract_batch` (several) return JSON; `GET /health` reports
-readiness and device. The service is **stateless** — each pod loads one model and serves
-independently — so it scales horizontally. A Kubernetes Deployment + Service + HPA example
+Endpoints: `POST /extract` (one image) and `POST /extract_batch` (several) return JSON — both take
+`dpi`, `quality`, and `tta` query params; `POST /plot` takes a print **and** a minutiae file
+(the TSV from `/extract`/`leader.infer`, or JSON) and returns the **confidence-coloured overlay PNG**;
+`GET /health` reports readiness and device. The service is **stateless** — each pod loads one model
+and serves independently — so it scales horizontally. A Kubernetes Deployment + Service + HPA example
 (one GPU per pod, autoscaled on load) is in [`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
 
 ### 4. Visualize
@@ -174,6 +179,21 @@ convention), a 1-epoch **fine-tune** round-trip, and the **FastAPI** endpoints. 
 of the runtime code (`leader/` + `service/`); the only runtime file excluded is `leader/dump_leader.py`,
 a build-time Keras→`.npz` weight converter that isn't runtime code (see `.coveragerc`). The service
 tests skip automatically if the optional `httpx` dep is missing.
+
+## Develop (dev container)
+
+A [Dev Container](https://containers.dev) is included, so you can get a ready-to-hack environment in
+one click:
+
+- **VS Code:** open the repo and run **“Dev Containers: Reopen in Container”** (Dev Containers
+  extension), or
+- **CLI:** `devcontainer up --workspace-folder .` (`npm i -g @devcontainers/cli`).
+
+It builds [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) (Python 3.12 + the OpenCV/matplotlib
+system libs), installs `requirements-dev.txt`, and forwards port 8000 for the web service. The image
+is **CPU** by default; for GPU development, base `.devcontainer/Dockerfile` on a CUDA PyTorch image
+and add `"runArgs": ["--gpus", "all"]` to `devcontainer.json` (see the GPU note in the `Dockerfile`).
+Inside, `pytest -q` runs the suite and `uvicorn service.app:app --reload` serves the API.
 
 ## License & attribution
 

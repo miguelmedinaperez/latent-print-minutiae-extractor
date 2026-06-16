@@ -21,12 +21,13 @@ def main():
     ap.add_argument("--dpi", type=int, default=500)
     ap.add_argument("--quality", type=float, default=0.1, help="detection threshold (lower = more)")
     ap.add_argument("--batch", action="store_true", help="treat the glob as a batch (one forward pass)")
+    ap.add_argument("--tta", action="store_true", help="test-time augmentation (~+0.02 AP, ~5x cost)")
     ap.add_argument("--out", default="", help="write TSV for a single image")
     ap.add_argument("--out-dir", default="", help="write one TSV per image (for globs)")
     ap.add_argument("--json", action="store_true", help="print JSON instead of a count")
     a = ap.parse_args()
     paths = sorted(glob.glob(a.image)) or [a.image]
-    ex = MinutiaeExtractor()
+    ex = MinutiaeExtractor(tta=a.tta)
     imgs = [cv.imread(p, cv.IMREAD_GRAYSCALE) for p in paths]
     if any(im is None for im in imgs):
         raise SystemExit("could not read one or more images")

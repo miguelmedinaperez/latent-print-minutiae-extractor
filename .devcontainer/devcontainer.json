@@ -1,0 +1,19 @@
+{
+  "name": "latent-print-minutiae-extractor",
+  "build": { "dockerfile": "Dockerfile", "context": ".." },
+  // Install runtime + dev deps (torch CPU, opencv, fastapi, matplotlib, pytest, pytest-cov, httpx).
+  "postCreateCommand": "pip install --no-cache-dir -r requirements-dev.txt",
+  "forwardPorts": [8000],
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-python.vscode-pylance"],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["tests"]
+      }
+    }
+  }
+  // GPU dev: this image is CPU (python:3.12). For an NVIDIA GPU, base .devcontainer/Dockerfile on a
+  // CUDA PyTorch image (and add  "runArgs": ["--gpus", "all"]  here) — see the README/Dockerfile note.
+}
