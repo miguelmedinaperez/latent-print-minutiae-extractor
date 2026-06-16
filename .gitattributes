@@ -1,0 +1,13 @@
+# Consistent LF line endings. This repo runs in Linux containers (the dev container bind-mounts the
+# working tree from the host), so shell scripts MUST be LF or bash fails on the CR (\r). Normalising
+# everything to LF also stops the CRLF<->LF churn that shows up as huge diffs on Windows checkouts.
+* text=auto eol=lf
+*.sh text eol=lf
+
+# Binary assets — never normalize.
+*.pt  binary
+*.npz binary
+*.png binary
+*.bmp binary
+*.jpg binary
+*.ico binary
