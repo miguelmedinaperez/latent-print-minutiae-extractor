@@ -1,5 +1,5 @@
 """Smoke tests for the PyTorch LEADER port and the MinutiaeExtractor API. CPU-only by design, so they
-run in CI without a GPU.
+run anywhere without a GPU.
 
 Coverage, and why each assertion actually bites:
   * test_forward_heads_*       — the REAL model loads and emits finite, in-range heads of the right
