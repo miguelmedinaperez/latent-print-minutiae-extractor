@@ -145,6 +145,16 @@ curl -F file=@latent.png -F minutiae=@minutiae.tsv http://localhost:8000/plot -o
 | `POST /extract_batch` | `files[]`; query `dpi`, `quality`, `format` | a **ZIP** of one `<name>.tsv` per image, or **JSON** `{results}` with `?format=json` |
 | `POST /plot` | `file` + `minutiae` (TSV/JSON) | overlay **PNG** (markers on the confidence scale) |
 
+> **Testing in Swagger (`/docs`).** The single-file endpoints — `/extract`, `/plot` — have a real file
+> picker and work interactively. **`/extract_batch` takes a *list* of files, which Swagger UI's "Try it
+> out" can't attach** (it renders a text box, not a file picker — a Swagger-UI limitation with file arrays
+> under OpenAPI 3.1, not a service bug). Test it with `curl`/Postman/Python instead, repeating the `files`
+> field once per image:
+> ```bash
+> curl -F files=@a.png -F files=@b.png "http://localhost:8000/extract_batch?dpi=500&quality=0.1" -o minutiae.zip
+> # or JSON:  curl -F files=@a.png -F files=@b.png "http://localhost:8000/extract_batch?format=json"
+> ```
+
 `tta` and `compile` are **construction settings**, so they're set once via **`POST /configure`** (the HTTP form of `MinutiaeExtractor(tta=, compile=)`) — `compile` is GPU-only with a ~1 min warmup per input size — while `dpi`/`quality` are per-request. The service is **stateless per request** and scales horizontally: for multi-pod deployments set the config at startup via the `LEADER_TTA` / `LEADER_COMPILE` env vars (so every pod is consistent), and use `/configure` for single-instance or dev overrides. A Kubernetes Deployment + Service + HPA example is in [`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
 
 ### 4. Visualize
