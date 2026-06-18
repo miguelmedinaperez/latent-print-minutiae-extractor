@@ -43,6 +43,14 @@ def _png_bytes():
     return buf.tobytes()
 
 
+def _is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
 def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
@@ -54,24 +62,32 @@ def test_health(client):
 
 
 def test_extract_endpoint(client):
+    """/extract returns the minutiae FILE (TSV), not JSON; count is in the X-Minutiae-Count header."""
     r = client.post("/extract", files={"file": ("latent.png", _png_bytes(), "image/png")})
     assert r.status_code == 200
-    body = r.json()
-    assert body["image"] == "latent.png"
-    assert body["count"] == 1                            # injected single peak → non-vacuous
-    assert body["count"] == len(body["minutiae"])
-    assert set(body["minutiae"][0]) == {"x", "y", "angle", "quality"}
+    assert r.headers["content-type"].startswith("text/tab-separated-values")
+    assert r.headers["x-minutiae-count"] == "1"          # injected single peak → non-vacuous
+    assert 'filename="latent.tsv"' in r.headers.get("content-disposition", "")
+    lines = r.text.strip().splitlines()
+    assert len(lines) == 1                                # one minutia, one line, no header
+    cols = lines[0].split("\t")
+    assert len(cols) == 4                                 # x, y, angle, quality
+    assert all(_is_float(c) for c in cols)
 
 
 def test_extract_batch_endpoint(client):
+    """/extract_batch returns a ZIP of one <stem>.tsv per image."""
+    import io, zipfile
     files = [("files", ("a.png", _png_bytes(), "image/png")),
              ("files", ("b.png", _png_bytes(), "image/png"))]
     r = client.post("/extract_batch", files=files)
     assert r.status_code == 200
-    results = r.json()["results"]
-    assert len(results) == 2
-    assert results[0]["count"] == 1 and results[1]["count"] == 1
-    assert results[0]["minutiae"] == results[1]["minutiae"]   # identical inputs → identical output
+    assert r.headers["content-type"] == "application/zip"
+    z = zipfile.ZipFile(io.BytesIO(r.content))
+    assert sorted(z.namelist()) == ["a.tsv", "b.tsv"]
+    a, b = z.read("a.tsv").decode(), z.read("b.tsv").decode()
+    assert a.strip() and a == b                           # identical inputs → identical TSV
+    assert len(a.strip().splitlines()) == 1              # one injected peak each
 
 
 def test_configure(client):
@@ -86,7 +102,7 @@ def test_configure(client):
     # the configured TTA is honoured by /extract (the flip-symmetric injected peak survives averaging).
     inject_one_peak_forward(appmod.extractor)
     r2 = client.post("/extract", files={"file": ("latent.png", _png_bytes(), "image/png")})
-    assert r2.status_code == 200 and r2.json()["count"] == 1
+    assert r2.status_code == 200 and r2.headers["x-minutiae-count"] == "1"
     assert appmod.extractor.tta is True
 
 
