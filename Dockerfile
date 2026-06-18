@@ -1,7 +1,8 @@
 # CPU image by default (works everywhere). For GPU, see the note at the bottom.
-# Python pinned to 3.12.10 (the verified version) for reproducible builds; for a fully bit-exact base,
-# pin a digest instead:  FROM python:3.12.10-slim@sha256:<digest>. (3.13 wheels for CV/torch still lag.)
-FROM python:3.12.10-slim
+# Python pinned to 3.14.6 (the verified version) for reproducible builds; for a fully bit-exact base,
+# pin a digest instead:  FROM python:3.14.6-slim@sha256:<digest>. (3.14 verified end-to-end: torch
+# cu130 + the numpy/opencv/matplotlib/scipy wheels all ship cp314; older 3.10–3.13 also work.)
+FROM python:3.14.6-slim
 RUN apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app

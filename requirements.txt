@@ -1,4 +1,4 @@
-# Runtime dependencies, pinned to the versions verified in CI + the Docker build (reproducible installs).
+# Runtime dependencies, pinned to the versions verified by the Docker build + test suite (reproducible installs).
 #
 # torch is the one exception: pin the VERSION, but choose the BUILD that matches your hardware.
 #   - CPU (and the default Docker image): the wheel below installs from PyPI as-is.
