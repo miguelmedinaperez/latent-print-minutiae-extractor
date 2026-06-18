@@ -3,16 +3,23 @@
     python -m leader.infer path/to/print.png --dpi 500 --quality 0.1 --out minutiae.tsv
     python -m leader.infer "dir/*.png" --batch --out-dir results/        # many images, batched
 
-TSV columns: x  y  angle(rad)  quality.
+TSV: a header row, then one minutia per line — columns  x  y  angle(rad)  quality  type
+(type is "E"=ending / "B"=bifurcation, from LEADER's type head; see the README note). Use --json
+for the same data as JSON instead.
 """
 import argparse, glob, json
 from pathlib import Path
 import cv2 as cv
 from . import MinutiaeExtractor
 
+TSV_COLUMNS = ("x", "y", "angle", "quality", "type")
 
-def _tsv(mns):
-    return "".join(f"{m['x']}\t{m['y']}\t{m['angle']:.6f}\t{m['quality']:.6f}\n" for m in mns)
+
+def _tsv(mns, header=True):
+    """TSV text: an optional header row then `x\\t y\\t angle\\t quality\\t type` per minutia."""
+    head = ("\t".join(TSV_COLUMNS) + "\n") if header else ""
+    return head + "".join(
+        f"{m['x']}\t{m['y']}\t{m['angle']:.6f}\t{m['quality']:.6f}\t{m['type']}\n" for m in mns)
 
 
 def main():

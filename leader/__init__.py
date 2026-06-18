@@ -2,11 +2,15 @@
 
     from leader import MinutiaeExtractor
     ex = MinutiaeExtractor()                       # loads the fine-tuned universal model
-    minutiae = ex.extract(gray_image, dpi=500)     # -> [{'x','y','angle','quality'}, ...]
+    minutiae = ex.extract(gray_image, dpi=500)     # -> [{'x','y','angle','quality','type'}, ...]
     batch    = ex.extract_batch([img1, img2])      # -> [[...], [...]]   (padded to a common size)
 
 Works on latent FINGERPRINTS and PALMPRINTS at 500 dpi (other DPIs are resampled). CPU or GPU
 (auto). Angle is in radians, LEADER's convention (negate if your GT uses the opposite sign).
+
+`type` is "E" (ridge ending) or "B" (bifurcation), from LEADER's type head. NOTE: the fine-tuning
+supervised detection (`pos`) and direction (`dir`); the type head is inherited from LEADER's
+pretraining and was not re-validated on latents — treat `type` as best-effort.
 """
 from pathlib import Path
 import numpy as np
@@ -87,11 +91,11 @@ class MinutiaeExtractor:
 
     def _decode(self, mns, ox, oy, w, h, scale):
         out = []
-        for mx, my, ang, _ty, ql in mns:
+        for mx, my, ang, ty, ql in mns:
             x, y = (mx - ox), (my - oy)
             if 0 <= x < w and 0 <= y < h:
                 out.append({"x": int(round(x * scale)), "y": int(round(y * scale)),
-                            "angle": float(ang), "quality": float(ql)})
+                            "angle": float(ang), "quality": float(ql), "type": ty})
         return out
 
     @torch.no_grad()

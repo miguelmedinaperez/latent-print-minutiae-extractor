@@ -29,11 +29,14 @@ def test_cli_single_tsv(tmp_path, monkeypatch, injected_extractor, synthetic_pri
     _patch(monkeypatch, injected_extractor, ["infer", str(img), "--out", str(out), "--quality", "0.1"])
     infer.main()
     lines = out.read_text().splitlines()
-    assert len(lines) == 1                                   # one injected peak -> one row
-    cols = lines[0].split("\t")
-    assert len(cols) == 4                                    # x  y  angle(rad)  quality
-    x, y, ang, q = (float(c) for c in cols)
+    assert lines[0].split("\t") == ["x", "y", "angle", "quality", "type"]   # header row
+    data = lines[1:]
+    assert len(data) == 1                                    # one injected peak -> one row
+    cols = data[0].split("\t")
+    assert len(cols) == 5                                    # x  y  angle(rad)  quality  type
+    x, y, ang, q = (float(c) for c in cols[:4])
     assert x.is_integer() and y.is_integer() and 0.0 <= q <= 1.0
+    assert cols[4] in ("E", "B")                             # type from LEADER's type head
 
 
 def test_cli_batch_out_dir(tmp_path, monkeypatch, injected_extractor, synthetic_print):
@@ -46,7 +49,8 @@ def test_cli_batch_out_dir(tmp_path, monkeypatch, injected_extractor, synthetic_
     tsvs = sorted(outdir.glob("*.tsv"))
     assert [p.name for p in tsvs] == ["a.tsv", "b.tsv"]
     for p in tsvs:
-        assert len(p.read_text().splitlines()) == 1
+        lines = p.read_text().splitlines()
+        assert lines[0].startswith("x\t") and len(lines) == 2   # header + one minutia
 
 
 def test_cli_json(tmp_path, monkeypatch, injected_extractor, synthetic_print, capsys):
@@ -56,4 +60,4 @@ def test_cli_json(tmp_path, monkeypatch, injected_extractor, synthetic_print, ca
     import json
     rec = json.loads(capsys.readouterr().out.strip())
     assert rec["image"].endswith("p.png") and len(rec["minutiae"]) == 1
-    assert set(rec["minutiae"][0]) == {"x", "y", "angle", "quality"}
+    assert set(rec["minutiae"][0]) == {"x", "y", "angle", "quality", "type"}

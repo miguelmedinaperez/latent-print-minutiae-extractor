@@ -100,11 +100,12 @@ def test_extract_returns_one_wellformed_minutia(injected, synthetic_print):
     mns = extractor.extract(synthetic_print, quality=0.1)
     assert len(mns) == 1                                   # one injected peak → one minutia
     m = mns[0]
-    assert set(m) == {"x", "y", "angle", "quality"}
+    assert set(m) == {"x", "y", "angle", "quality", "type"}
     h, w = synthetic_print.shape
     assert 0 <= m["x"] < w and 0 <= m["y"] < h             # de-padded back into the original frame
     assert _angle_err(m["angle"], theta) < 0.05            # angle passed through correctly
     assert m["quality"] > 0.1
+    assert m["type"] == "E"                                # injected typ=0.8 ≥ 0.5 → ending
 
 
 def test_extract_is_deterministic(injected, synthetic_print):

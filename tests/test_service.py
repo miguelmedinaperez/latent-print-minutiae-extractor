@@ -62,17 +62,27 @@ def test_health(client):
 
 
 def test_extract_endpoint(client):
-    """/extract returns the minutiae FILE (TSV), not JSON; count is in the X-Minutiae-Count header."""
+    """/extract returns the minutiae FILE (TSV with header + type), not JSON; count in X-Minutiae-Count."""
     r = client.post("/extract", files={"file": ("latent.png", _png_bytes(), "image/png")})
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/tab-separated-values")
     assert r.headers["x-minutiae-count"] == "1"          # injected single peak → non-vacuous
     assert 'filename="latent.tsv"' in r.headers.get("content-disposition", "")
     lines = r.text.strip().splitlines()
-    assert len(lines) == 1                                # one minutia, one line, no header
-    cols = lines[0].split("\t")
-    assert len(cols) == 4                                 # x, y, angle, quality
-    assert all(_is_float(c) for c in cols)
+    assert lines[0].split("\t") == ["x", "y", "angle", "quality", "type"]   # header row
+    data = lines[1:]
+    assert len(data) == 1                                 # one minutia
+    cols = data[0].split("\t")
+    assert len(cols) == 5 and all(_is_float(c) for c in cols[:4]) and cols[4] in ("E", "B")
+
+
+def test_extract_json_format(client):
+    """/extract?format=json keeps JSON available, with the same five-field minutiae."""
+    r = client.post("/extract?format=json", files={"file": ("latent.png", _png_bytes(), "image/png")})
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/json")
+    body = r.json()
+    assert body["image"] == "latent.png" and body["count"] == 1
+    assert set(body["minutiae"][0]) == {"x", "y", "angle", "quality", "type"}
 
 
 def test_extract_batch_endpoint(client):
@@ -87,7 +97,8 @@ def test_extract_batch_endpoint(client):
     assert sorted(z.namelist()) == ["a.tsv", "b.tsv"]
     a, b = z.read("a.tsv").decode(), z.read("b.tsv").decode()
     assert a.strip() and a == b                           # identical inputs → identical TSV
-    assert len(a.strip().splitlines()) == 1              # one injected peak each
+    alines = a.strip().splitlines()
+    assert alines[0].split("\t")[0] == "x" and len(alines) == 2   # header + one injected peak
 
 
 def test_configure(client):
