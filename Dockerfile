@@ -12,10 +12,14 @@ WORKDIR /app
 #     docker build --build-arg TORCH_INDEX_URL=https://download.pytorch.org/whl/cu130 -t mnx:gpu .
 ARG TORCH_INDEX_URL=https://pypi.org/simple
 RUN pip install --no-cache-dir torch==2.12.0 --index-url ${TORCH_INDEX_URL}
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt    # torch already satisfied → not re-fetched
+# Install the project itself (pip install .) so the image also gets the console commands
+# (leader-extract / leader-finetune / leader-viz). Deps come from requirements.txt via pyproject's
+# dynamic metadata; torch is already satisfied above, so it is not re-fetched. README.md is copied
+# because pyproject references it as the long-description.
+COPY pyproject.toml requirements.txt README.md ./
 COPY leader/ ./leader/
 COPY service/ ./service/
+RUN pip install --no-cache-dir .
 EXPOSE 8000
 # One model per worker; scale by running more pods (k8s) rather than many workers per pod.
 CMD ["uvicorn", "service.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

@@ -1,0 +1,50 @@
+# Packaging + tooling config. This project is an application — the canonical, reproducible install is
+# `pip install -r requirements.txt` (pinned), and the Docker image installs that way. This file is
+# additive: it makes the project `pip install -e .`-able so `import leader` / `import service` resolve
+# from anywhere (no cwd-on-path needed), declares the supported Python range, exposes console commands,
+# and consolidates the pytest + coverage configuration. The pinned dependency set lives in
+# requirements.txt (single source of truth) and is read in below via dynamic metadata.
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latent-print-minutiae-extractor"
+version = "1.0.0"
+description = "Minutiae extraction from latent fingerprints and palmprints with a fine-tuned universal LEADER model (a PyTorch port of PyFing's LEADER)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "Miguel Angel Medina-Pérez" }]
+keywords = ["fingerprint", "palmprint", "minutiae", "latent", "biometrics", "forensics", "LEADER", "pytorch"]
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.0", "pytest-cov==7.1.0", "httpx==0.28.1"]
+
+[project.scripts]
+leader-extract = "leader.infer:main"
+leader-finetune = "leader.finetune:main"
+leader-viz = "leader.viz:main"
+
+[tool.setuptools]
+packages = ["leader", "service"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.package-data]
+leader = ["weights/*.pt", "weights/*.npz", "weights/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]          # so `import leader` / `import service` resolve even without an editable install
+
+[tool.coverage.run]
+source = ["leader", "service"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_also = ["if __name__ == .__main__.:"]
