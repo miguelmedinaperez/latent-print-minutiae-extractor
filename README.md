@@ -28,14 +28,57 @@ This project is my attempt to put a capable, free tool in those labs' hands. It 
 If you work in, or build for, a forensic lab where the budget is the real constraint, I hope it saves
 you some effort.
 
+## How this compares to the original PyFing / LEADER
+
+This repo keeps **LEADER's architecture exactly as the PyFing authors designed it** — every gain below
+comes from porting, fine-tuning, and packaging the model, **not** from changing the detector itself.
+
+**What this version adds**
+
+- **PyTorch port — GPU- and Blackwell-ready.** The original LEADER ships as Keras/TensorFlow, which has
+  no NVIDIA Blackwell (sm_120) wheel, so on cards like the RTX 5080 it runs **CPU-only**. We ported it to
+  PyTorch (verified to ~1e-6 against the original), so it runs on GPU out of the box — **~13 ms per print
+  (~5 ms with CUDA-graph compile) vs ~0.9 s on CPU**.
+- **Fine-tuned for latents.** PyFing's weights are pretrained for general use; we fine-tuned on ~1,000
+  latent fingerprints + palmprints under held-out, subject-disjoint 5-fold cross-validation. The result is
+  the **best detector on 3 of 4 latent benchmarks** and the **best loc+angle accuracy on all 4** — ahead of
+  FingerNet, MinutiaeNet, and the original LEADER (full tables in [RESULTS.md](RESULTS.md)).
+- **One universal model for fingerprints *and* palmprints.** It pools both print types with no dilution
+  (it matches per-domain specialists), so a single ~8 MB model handles both — where the original is one
+  general model not specialised for latent palms.
+- **A deployment layer the research library doesn't have** — CLI, Python API, FastAPI web service +
+  container + Kubernetes example, optional test-time augmentation and CUDA-graph compilation, and a
+  minutiae visualizer.
+
+**Why our evaluation — and especially SD27 — differs from the LEADER paper**
+
+We report **every number on the full latent image with no segmentation-mask cropping**, ranked by
+**confidence (AP / max-F1)**, under **held-out, subject-disjoint 5-fold CV** — i.e. what a real deployment
+actually sees. The LEADER paper (Cappelli & Ferrara, [arXiv:2602.15493](https://arxiv.org/abs/2602.15493))
+instead **crops each image to the ground-truth-mask ridge bounding box, drops a 14 px border, and reports
+optimal-point F1** (zero-shot). The two protocols measure different things and are **not directly
+comparable**.
+
+That is the whole reason **stock LEADER's SD27 loc AP reads 0.174 here, not the paper's ~0.71**: LEADER has
+**no internal segmentation**, so on a full crime-scene latent — a small print on a large, noisy background —
+it fires **background false minutiae** that confidence-ranked AP penalises heavily. The paper's mask-crop
+removes exactly that background; FingerNet and MinutiaeNet survive the full image only because they segment
+internally. (We did evaluate adding a segmentation step: it recovers much of that SD27 gap, but it **only
+helps heavy-background latents and degrades clean, full-frame prints**, so the shipped model is deliberately
+kept **segmentation-free** — apply your own foreground mask downstream if your latents have heavy background.)
+
+Under this honest full-image protocol our fine-tune still **transforms** SD27 — **0.174 → 0.538 loc AP
+(0.555 with TTA)** — and gives the **best loc+angle AP** on the set. It simply isn't comparable to the
+paper's mask-cropped F1, and we don't claim it is.
+
 ## Install
 
 ```bash
 git clone <repo-url> && cd latent-print-minutiae-extractor
-pip install -r requirements.txt          # pinned, reproducible versions (Python 3.12)
+pip install -r requirements.txt          # pinned, reproducible versions (Python 3.14)
 ```
 
-Dependencies are **pinned** to the versions verified in CI and the Docker build, so installs are reproducible. GPU is auto-detected. **For an NVIDIA GPU, install the *same* `torch` version from the CUDA index that matches your card** — recent cards / Blackwell (sm_120) need a CUDA 13 build:
+Dependencies are **pinned** to the versions verified by the Docker build and the test suite, so installs are reproducible. GPU is auto-detected. **For an NVIDIA GPU, install the *same* `torch` version from the CUDA index that matches your card** — recent cards / Blackwell (sm_120) need a CUDA 13 build:
 
 ```bash
 pip install torch==2.12.0 --index-url https://download.pytorch.org/whl/cu130   # older cards: a cu12 index
@@ -51,7 +94,7 @@ Otherwise it falls back to CPU (the default wheel in `requirements.txt`).
 python -m leader.infer latent.png --dpi 500 --quality 0.1 --out minutiae.tsv
 python -m leader.infer "prints/*.png" --batch --out-dir out/      # many images
 python -m leader.infer latent.png --tta --compile --out minutiae.tsv   # TTA and/or CUDA-graph (GPU)
-# TSV columns:  x   y   angle(rad)   quality
+# TSV: a header row, then  x  y  angle(rad)  quality  type(E/B)  per minutia  (--json for JSON instead)
 ```
 
 ### 2. Python
@@ -62,7 +105,7 @@ from leader import MinutiaeExtractor
 
 ex = MinutiaeExtractor()                          # loads the universal model (CPU or GPU)
 img = cv2.imread("latent.png", cv2.IMREAD_GRAYSCALE)
-minutiae = ex.extract(img, dpi=500, quality=0.1)  # [{'x','y','angle','quality'}, ...]
+minutiae = ex.extract(img, dpi=500, quality=0.1)  # [{'x','y','angle','quality','type'}, ...]
 
 # many images in one pass:
 batch = ex.extract_batch([img1, img2, img3], dpi=500)
@@ -85,8 +128,9 @@ docker run --gpus all -p 8000:8000 mnx:gpu                 # /health then report
 
 # (optional) initialize the extractor — set TTA / CUDA-graph compile once:
 curl -X POST http://localhost:8000/configure -H "Content-Type: application/json" -d '{"tta": true, "compile": false}'
-# extract:
-curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1"
+# extract -> the minutiae file (TSV: header row, then x⇥y⇥angle⇥quality⇥type; count in X-Minutiae-Count):
+curl -F file=@latent.png "http://localhost:8000/extract?dpi=500&quality=0.1" -o minutiae.tsv
+#   ...or JSON instead:  curl -F file=@latent.png "http://localhost:8000/extract?format=json"
 # overlay a minutiae file on its print -> PNG (markers coloured by the confidence scale):
 curl -F file=@latent.png -F minutiae=@minutiae.tsv http://localhost:8000/plot -o overlay.png
 ```
@@ -97,8 +141,8 @@ curl -F file=@latent.png -F minutiae=@minutiae.tsv http://localhost:8000/plot -o
 |---|---|---|
 | `GET /health` | — | `{status, device, tta, compiled, half}` |
 | `POST /configure` | JSON body `{tta, compile, half}` | (re)initializes the extractor; returns the config |
-| `POST /extract` | `file`; query `dpi`, `quality` | `{image, count, minutiae}` |
-| `POST /extract_batch` | `files[]`; query `dpi`, `quality` | `{results: [...]}` |
+| `POST /extract` | `file`; query `dpi`, `quality`, `format` | the **minutiae TSV file** (`text/tab-separated-values`, header row + `x⇥y⇥angle⇥quality⇥type` — same as `leader-extract`; count in `X-Minutiae-Count`), or **JSON** with `?format=json` |
+| `POST /extract_batch` | `files[]`; query `dpi`, `quality`, `format` | a **ZIP** of one `<name>.tsv` per image, or **JSON** `{results}` with `?format=json` |
 | `POST /plot` | `file` + `minutiae` (TSV/JSON) | overlay **PNG** (markers on the confidence scale) |
 
 `tta` and `compile` are **construction settings**, so they're set once via **`POST /configure`** (the HTTP form of `MinutiaeExtractor(tta=, compile=)`) — `compile` is GPU-only with a ~1 min warmup per input size — while `dpi`/`quality` are per-request. The service is **stateless per request** and scales horizontally: for multi-pod deployments set the config at startup via the `LEADER_TTA` / `LEADER_COMPILE` env vars (so every pod is consistent), and use `/configure` for single-instance or dev overrides. A Kubernetes Deployment + Service + HPA example is in [`deploy/k8s-deployment.yaml`](deploy/k8s-deployment.yaml).
@@ -115,13 +159,16 @@ python -m leader.viz latent.png --out overlay.png --quality 0.1
 
 ## Output format & angle convention
 
-Every interface returns the **same minutiae**. The CLI writes **TSV** (one minutia per line); the Python API and the web service return the equivalent **JSON** dicts.
+Every interface returns the **same five fields**. The CLI and `/extract` write **TSV** — a header row, then one minutia per line; the Python API returns the equivalent **JSON** dicts, and `--json` (CLI) / `?format=json` (service) give JSON there too.
 
 | field | TSV col | meaning |
 |---|---|---|
 | `x`, `y` | 1–2 | integer **pixel coordinates in the input image** — origin top-left, `x` →right, `y` →down. (At `dpi≠500` the model runs on a resampled copy and maps coordinates back to your image's grid.) |
 | `angle` | 3 | ridge **direction in radians**, range `(−π, π]`, in LEADER's native convention (see below) |
 | `quality` | 4 | detection **confidence in (0, 1]** — the detection-map peak; higher = more confident. The `quality=` argument drops anything below it. |
+| `type` | 5 | minutia type — **`E`** (ridge ending) or **`B`** (bifurcation), from LEADER's type head. **Caveat:** fine-tuning supervised detection + direction, not type; the type head is inherited from LEADER's pretraining and not re-validated on latents — treat it as best-effort. |
+
+The TSV's first line is a **header row** (`x⇥y⇥angle⇥quality⇥type`); our parsers (e.g. `/plot`) skip it, and `pandas.read_csv(sep="\t")` picks it up as column names.
 
 **Angle convention — important for drawing or matching.** The reported `angle` is in LEADER's native
 convention. To draw the direction (or compare against GT in the usual examiner convention) on an
@@ -192,7 +239,7 @@ one click:
   extension), or
 - **CLI:** `devcontainer up --workspace-folder .` (`npm i -g @devcontainers/cli`).
 
-It builds [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) (Python 3.12 + the OpenCV/matplotlib
+It builds [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) (Python 3.14 + the OpenCV/matplotlib
 system libs), installs `requirements-dev.txt`, and forwards port 8000 for the web service. Inside,
 `pytest -q` runs the suite and `uvicorn service.app:app --reload` serves the API.
 
