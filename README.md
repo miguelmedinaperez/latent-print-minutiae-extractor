@@ -1,15 +1,15 @@
 # latent-print-minutiae-extractor
 
-**Minutiae extraction from latent fingerprints *and* palmprints at 500 dpi, with one fine-tuned universal model.** A PyTorch port of PyFing's **LEADER** minutiae CNN plus a fine-tuned *universal* model that is the **best detector on 3 of 4 benchmarks** (held-out, subject-disjoint 5-fold CV) — see [RESULTS.md](RESULTS.md).
+**Open source minutiae extractor from latent fingerprints *and* palmprints at 500 dpi, with one fine-tuned universal model.** A PyTorch port of PyFing's **LEADER** minutiae CNN plus a fine-tuned *universal* model that is the **best detector on 3 of 4 benchmarks** (held-out, subject-disjoint 5-fold CV) — see [RESULTS.md](RESULTS.md).
 
 One model handles both print types; the weights (~8 MB) ship in this repo, so it runs out of the box on CPU or GPU.
 
 > **Built on PyFing's LEADER.** This project is a PyTorch port and a fingerprint/palmprint *fine-tune*
 > of **LEADER** (Lightweight End-to-end Attention-gated Dual autoencodER), the minutiae extractor by
-> **Raffaele Cappelli** (University of Bologna), distributed in the
+> **Raffaele Cappelli** and **Matteo Ferrara** (University of Bologna), distributed in the
 > [PyFing](https://github.com/raffaele-cappelli/pyfing) library (© 2023, MIT). The base architecture
 > and pretrained weights are entirely the PyFing authors' work — all credit for them goes there. This
-> repo adds only the PyTorch port, the fine-tuning, and the serving layer. Please **cite PyFing /
+> repo adds the PyTorch port, the fine-tuning, and the serving layer. Please **cite PyFing /
 > LEADER** if you use this (see [Credits & citation](#license--attribution)).
 
 ## Why this project
@@ -21,55 +21,30 @@ Latent fingerprints and palmprints are among the hardest evidence to process. Th
 This project is my attempt to put a capable, free tool in those labs' hands. It stands on the shoulders of the [PyFing](https://github.com/raffaele-cappelli/pyfing) project — I'm grateful to **Raffaele Cappelli** and **Matteo Ferrara** the PyFing authors both for the quality of their **LEADER** model and for releasing it openly. With the help of [Claude Code](https://claude.com/claude-code) and an automated fine-tuning loop inspired by [Andrej Karpathy's autoresearch](https://github.com/karpathy/autoresearch), I fine-tuned LEADER into a single **universal** model for both fingerprints and palmprints that:
 
 - **runs on any consumer hardware** — ~0.9 s per fingerprint / ~2.4 s per palmprint on CPU, and ~13 ms / ~30 ms on a desktop NVIDIA GPU (~5 ms with CUDA-graph compile);
-- **supports NVIDIA Blackwell (sm_120, e.g. RTX 5080)** out of the box, via a single `pip install`; 
-- **is highly accurate** — the best detector on 3 of 4 latent benchmarks under held-out, subject-disjoint cross-validation: loc AP **0.731** (fingerprints), **0.711** (palms), **0.767** (public LPIDB), ahead of FingerNet, MinutiaeNet and the original PyFing (full tables in [RESULTS.md](RESULTS.md)); and
+- **runs on NVIDIA Blackwell (sm_120, e.g. RTX 5080)** with no code changes — just install the matching CUDA-13 PyTorch wheel (one `pip install`, see [Install](#install));
+- **is highly accurate** — the best detector on 3 of 4 latent benchmarks under held-out, subject-disjoint cross-validation: loc AP **0.731** (fingerprints), **0.711** (palms), **0.767** (public LPIDB) **with TTA** — **0.728 / 0.695 / 0.758** by default (TTA is opt-in, ~5× cost) — ahead of FingerNet, MinutiaeNet and the original PyFing (full tables in [RESULTS.md](RESULTS.md)); and
 - **deploys in minutes** as Python, a CLI, or a container — with the weights included in the repo.
 
-If you work in, or build for, a forensic lab where the budget is the real constraint, I hope it saves
-you some effort.
+If you work in, or build for, a forensic lab where the budget is the real constraint, I hope it saves you some effort.
 
 ## How this compares to the original PyFing / LEADER
 
-This repo keeps **LEADER's architecture exactly as the PyFing authors designed it** — every gain below
-comes from porting, fine-tuning, and packaging the model, **not** from changing the detector itself.
+This repo keeps **LEADER's architecture exactly as the PyFing authors designed it** — every gain below comes from porting, fine-tuning, and packaging the model, **not** from changing the detector itself.
 
 **What this version adds**
 
-- **PyTorch port — GPU- and Blackwell-ready.** The original LEADER ships as Keras/TensorFlow, which has
-  no NVIDIA Blackwell (sm_120) wheel, so on cards like the RTX 5080 it runs **CPU-only**. We ported it to
-  PyTorch (verified to ~1e-6 against the original), so it runs on GPU out of the box — **~13 ms per print
-  (~5 ms with CUDA-graph compile) vs ~0.9 s on CPU**.
-- **Fine-tuned for latents.** PyFing's weights are pretrained for general use; we fine-tuned on ~1,000
-  latent fingerprints + palmprints under held-out, subject-disjoint 5-fold cross-validation. The result is
-  the **best detector on 3 of 4 latent benchmarks** and the **best loc+angle accuracy on all 4** — ahead of
-  FingerNet, MinutiaeNet, and the original LEADER (full tables in [RESULTS.md](RESULTS.md)).
-- **One universal model for fingerprints *and* palmprints.** It pools both print types with no dilution
-  (it matches per-domain specialists), so a single ~8 MB model handles both — where the original is one
-  general model not specialised for latent palms.
-- **A deployment layer the research library doesn't have** — CLI, Python API, FastAPI web service +
-  container + Kubernetes example, optional test-time augmentation and CUDA-graph compilation, and a
-  minutiae visualizer.
+- **Fine-tuned for latents.** PyFing's weights are pretrained for general use; we fine-tuned on ~1,000 latent fingerprints + palmprints under held-out, subject-disjoint 5-fold cross-validation. The result is the **best detector on 3 of 4 latent benchmarks** and the **best loc+angle accuracy on all 4** — ahead of FingerNet, MinutiaeNet, and the original LEADER (full tables in [RESULTS.md](RESULTS.md)).
+- **PyTorch port — GPU- and Blackwell-ready.** The original LEADER ships as Keras/TensorFlow, which has no NVIDIA Blackwell (sm_120) wheel, so on cards like the RTX 5080 it runs **CPU-only**. We ported it to PyTorch (verified to ~1e-6 against the original), so it runs on GPU out of the box — **~13 ms per print (~5 ms with CUDA-graph compile) vs ~0.9 s on CPU**.
+- **One universal model for fingerprints *and* palmprints.** It pools both print types with no dilution (it matches per-domain specialists), so a single ~8 MB model handles both — where the original is one general model not specialised for latent palms.
+- **A deployment layer the research library doesn't have** — CLI, Python API, FastAPI web service +   container + Kubernetes example, optional test-time augmentation and CUDA-graph compilation, and a   minutiae visualizer.
 
 **Why our evaluation — and especially SD27 — differs from the LEADER paper**
 
-We report **every number on the full latent image with no segmentation-mask cropping**, ranked by
-**confidence (AP / max-F1)**, under **held-out, subject-disjoint 5-fold CV** — i.e. what a real deployment
-actually sees. The LEADER paper (Cappelli & Ferrara, [arXiv:2602.15493](https://arxiv.org/abs/2602.15493))
-instead **crops each image to the ground-truth-mask ridge bounding box, drops a 14 px border, and reports
-optimal-point F1** (zero-shot). The two protocols measure different things and are **not directly
-comparable**.
+We report **every number on the full latent image with no segmentation-mask cropping**, ranked by **confidence (AP / max-F1)**, under **held-out, subject-disjoint 5-fold CV** — i.e. what a real deployment actually sees. The LEADER paper (Cappelli & Ferrara, [arXiv:2602.15493](https://arxiv.org/abs/2602.15493)) instead **crops each image to the ground-truth-mask ridge bounding box, drops a 14 px border, and reports optimal-point F1** (zero-shot). The two protocols measure different things and are **not directly comparable**.
 
-That is the whole reason **stock LEADER's SD27 loc AP reads 0.174 here, not the paper's ~0.71**: LEADER has
-**no internal segmentation**, so on a full crime-scene latent — a small print on a large, noisy background —
-it fires **background false minutiae** that confidence-ranked AP penalises heavily. The paper's mask-crop
-removes exactly that background; FingerNet and MinutiaeNet survive the full image only because they segment
-internally. (We did evaluate adding a segmentation step: it recovers much of that SD27 gap, but it **only
-helps heavy-background latents and degrades clean, full-frame prints**, so the shipped model is deliberately
-kept **segmentation-free** — apply your own foreground mask downstream if your latents have heavy background.)
+That is the whole reason **stock LEADER's SD27 loc AP reads 0.174 here, not the paper's ~0.71**: LEADER has **no internal segmentation**, so on a full crime-scene latent — a small print on a large, noisy background — it fires **background false minutiae** that confidence-ranked AP penalises heavily. The paper's mask-crop removes exactly that background; FingerNet and MinutiaeNet survive the full image only because they segment internally. (We did evaluate adding a segmentation step: it recovers much of that SD27 gap, but it **only helps heavy-background latents and degrades clean, full-frame prints**, so the shipped model is deliberately kept **segmentation-free** — apply your own foreground mask downstream if your latents have heavy background.)
 
-Under this honest full-image protocol our fine-tune still **transforms** SD27 — **0.174 → 0.538 loc AP
-(0.555 with TTA)** — and gives the **best loc+angle AP** on the set. It simply isn't comparable to the
-paper's mask-cropped F1, and we don't claim it is.
+Under this honest full-image protocol our fine-tune still **transforms** SD27 — **0.174 → 0.538 loc AP (0.555 with TTA)** — and gives the **best loc+angle AP** on the set. It simply isn't comparable to the paper's mask-cropped F1, and we don't claim it is.
 
 ## Install
 
@@ -96,6 +71,9 @@ python -m leader.infer "prints/*.png" --batch --out-dir out/      # many images
 python -m leader.infer latent.png --tta --compile --out minutiae.tsv   # TTA and/or CUDA-graph (GPU)
 # TSV: a header row, then  x  y  angle(rad)  quality  type(E/B)  per minutia  (--json for JSON instead)
 ```
+
+After `pip install .` (or `pip install -e .`) the same commands are also on your `PATH` as
+**`leader-extract`**, **`leader-finetune`**, and **`leader-viz`** — e.g. `leader-extract latent.png --out minutiae.tsv`.
 
 ### 2. Python
 
@@ -180,9 +158,7 @@ Every interface returns the **same five fields**. The CLI and `/extract` write *
 
 The TSV's first line is a **header row** (`x⇥y⇥angle⇥quality⇥type`); our parsers (e.g. `/plot`) skip it, and `pandas.read_csv(sep="\t")` picks it up as column names.
 
-**Angle convention — important for drawing or matching.** The reported `angle` is in LEADER's native
-convention. To draw the direction (or compare against GT in the usual examiner convention) on an
-image — where the **y axis points down** — **negate the angle** and use cos/sin:
+**Angle convention — important for drawing or matching.** The reported `angle` is in LEADER's native convention. To draw the direction (or compare against GT in the usual examiner convention) on an image — where the **y axis points down** — **negate the angle** and use cos/sin:
 
 ```python
 import numpy as np
@@ -193,9 +169,7 @@ y2 = m["y"] + L * np.sin(a)            # endpoint y  (y increases downward)
 # draw a line from (m['x'], m['y']) to (x2, y2)
 ```
 
-This is exactly what `leader.viz` does. (Equivalently: the direction unit vector is
-`(cos(angle), −sin(angle))` in image pixel axes.) If your downstream matcher expects the standard
-"angle CCW from +x with y up", pass `−angle`.
+This is exactly what `leader.viz` does. (Equivalently: the direction unit vector is `(cos(angle), −sin(angle))` in image pixel axes.) If your downstream matcher expects the standard "angle CCW from +x with y up", pass `−angle`.
 
 ## Hardware & runtime
 
@@ -206,7 +180,7 @@ Per-image latency on an NVIDIA RTX 5080 (Blackwell) and on CPU:
 | fingerprint (~768×800) | **~13 ms** | **~5 ms** | ~0.9 s |
 | palmprint (~850×1750) | **~30 ms** | (per-size compile) | ~2.4 s |
 
-- **GPU strongly recommended** (≈ 75× faster than CPU). The model is tiny — ~0.9 M parameters, ~8 MB weights — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
+- **GPU strongly recommended** (≈ 75× faster than CPU). The model is tiny — ~0.9 M parameters (~8 MB of weight files on disk: the base + fine-tuned checkpoints) — so any modern GPU and ~4 GB RAM suffice; a large palmprint is the heaviest case.
 - **fp16 is on by default on GPU** (`MinutiaeExtractor(half=True)`): ~25 % faster and the detected   minutiae are unchanged — verified for **both positions (100 % overlap) and angles** (Δ median 0.04°) vs fp32. Pass `half=False` to disable.
 - **CUDA graphs give ~2.5× more** (`MinutiaeExtractor(compile=True)`): `torch.compile`'s   `reduce-overhead` mode captures the network's launch sequence into a replay graph — 13 ms → ~5 ms,   **identical minutiae**. The model is launch-bound, so this is the biggest lever. Caveat: it recompiles per input *size* (~1 min warmup each), so it pays off for fixed-size / high-volume same-size workloads. (fp8/NVFP4 do **not** help: cuDNN has no fp8/fp4 *conv* kernels — those formats target matmul/transformers, not this conv U-Net.)
 - **CUDA note:** install a PyTorch build matching your GPU. NVIDIA Blackwell (sm_120) needs a CUDA 13 build of PyTorch; older cards work with standard CUDA 12 wheels. CPU works everywhere (slower).
@@ -234,7 +208,7 @@ is a load + forward-pass sanity check.)
 
 ```bash
 pip install -r requirements-dev.txt
-pytest -q                                          # 25 CPU-only tests
+pytest -q                                          # 26 CPU-only tests
 pytest --cov=leader --cov=service --cov-report=term-missing   # coverage (96%)
 ```
 
@@ -242,37 +216,21 @@ The suite (in `tests/`) is hardware-independent (runs on CPU) and asserts the AP
 
 ## Develop (dev container)
 
-A [Dev Container](https://containers.dev) is included, so you can get a ready-to-hack environment in
-one click:
+A [Dev Container](https://containers.dev) is included, so you can get a ready-to-hack environment in one click:
 
-- **VS Code:** open the repo and run **“Dev Containers: Reopen in Container”** (Dev Containers
-  extension), or
+- **VS Code:** open the repo and run **“Dev Containers: Reopen in Container”** (Dev Containers extension), or
 - **CLI:** `devcontainer up --workspace-folder .` (`npm i -g @devcontainers/cli`).
 
-It builds [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) (Python 3.14 + the OpenCV/matplotlib
-system libs), installs `requirements-dev.txt`, and forwards port 8000 for the web service. Inside,
-`pytest -q` runs the suite and `uvicorn service.app:app --reload` serves the API.
+It builds [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) (Python 3.14 + the OpenCV/matplotlib system libs), installs `requirements-dev.txt`, and forwards port 8000 for the web service. Inside, `pytest -q` runs the suite and `uvicorn service.app:app --reload` serves the API.
 
-**GPU is automatic.** The container requests the host GPU (`hostRequirements.gpu`), and on first
-create [`.devcontainer/gpu-setup.sh`](.devcontainer/gpu-setup.sh) detects it and swaps the CPU torch
-for the matching **CUDA build** (cu130 — supports Blackwell / sm_120; older cards: set
-`TORCH_INDEX_URL` to a cu12x index). On a CPU-only host it's a no-op. After “Reopen in Container”,
-`GET /health` should report `"device":"cuda"`; if it still says `cpu`, your tooling didn't pass the
-GPU — add `"runArgs": ["--gpus", "all"]` to `devcontainer.json` and rebuild. (If `device:cpu`
-persists, it's one of: no GPU passthrough, or a CPU torch build — `gpu-setup.sh` prints which.)
+**GPU is automatic.** The container requests the host GPU (`hostRequirements.gpu`), and on first create [`.devcontainer/gpu-setup.sh`](.devcontainer/gpu-setup.sh) detects it and swaps the CPU torch for the matching **CUDA build** (cu130 — supports Blackwell / sm_120; older cards: set `TORCH_INDEX_URL` to a cu12x index). On a CPU-only host it's a no-op. After “Reopen in Container”, `GET /health` should report `"device":"cuda"`; if it still says `cpu`, your tooling didn't pass the GPU — add `"runArgs": ["--gpus", "all"]` to `devcontainer.json` and rebuild. (If `device:cpu` persists, it's one of: no GPU passthrough, or a CPU torch build — `gpu-setup.sh` prints which.)
 
-**Debug the service in VS Code.** `.vscode/launch.json` ships ready-to-use configs (Python / debugpy
-extension). Open the repo, go to **Run & Debug**, pick **“FastAPI: debug (run service/app.py)”** and
-press **F5** — `service/app.py` runs uvicorn in-process (so breakpoints bind) on
-`http://127.0.0.1:8000`. There's also a **uvicorn `--reload`** config (hot reload, limited breakpoints)
-and a **pytest** config. From a terminal the same entrypoint is `python -m service.app`.
+**Debug the service in VS Code.** `.vscode/launch.json` ships ready-to-use configs (Python / debugpy extension). Open the repo, go to **Run & Debug**, pick **“FastAPI: debug (run service/app.py)”** and press **F5** — `service/app.py` runs uvicorn in-process (so breakpoints bind) on `http://127.0.0.1:8000`. There's also a **uvicorn `--reload`** config (hot reload, limited breakpoints) and a **pytest** config. From a terminal the same entrypoint is `python -m service.app`.
 
 ## License & attribution
 
 Apache-2.0 (see [LICENSE](LICENSE)).
 
-**Credits — the base model.** The architecture and pretrained weights are **LEADER** (Lightweight
-End-to-end Attention-gated Dual autoencodER) by **Raffaele Cappelli** and **Matteo Ferrara**  (University of Bologna), shipped in the **[PyFing](https://github.com/raffaele-cappelli/pyfing)** library (© 2023, MIT). This repository only **ports it to PyTorch** and **fine-tunes** it on latent fingerprints and palmprints; all credit for the underlying detector belongs to the PyFing authors. The MIT notice is retained in [NOTICE](NOTICE). If you use this work, please cite **PyFing / LEADER** (Cappelli, *LEADER*,
-arXiv:2602.15493) alongside this repository.
+**Credits — the base model.** The architecture and pretrained weights are **LEADER** (Lightweight End-to-end Attention-gated Dual autoencodER) by **Raffaele Cappelli** and **Matteo Ferrara**  (University of Bologna), shipped in the **[PyFing](https://github.com/raffaele-cappelli/pyfing)** library (© 2023, MIT). This repository **ports it to PyTorch** and **fine-tunes** it on latent fingerprints and palmprints; all credit for the underlying detector belongs to the PyFing authors. The MIT notice is retained in [NOTICE](NOTICE). If you use this work, please cite **PyFing / LEADER** (Cappelli & Ferrara, *LEADER*, arXiv:2602.15493) alongside this repository.
 
 Benchmark comparisons in [RESULTS.md](RESULTS.md) additionally cite FingerNet and MinutiaeNet (© 2017 D.-L. Nguyen, MIT) for context only — no code or weights from those projects are included.

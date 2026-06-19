@@ -74,8 +74,8 @@ mask-cropped numbers.
   (0.711 with TTA / 0.695 default), LPIDB (0.767 / 0.758), Internal fingerprint set (0.731 / 0.728)
   — with **one model** for both fingerprints and palms.
 - It transforms LEADER on **SD27** (original 0.174 → 0.538 loc AP, +0.36; 0.555 with TTA) — both
-  full-image, no segmentation (see **Protocol** above); there it is 2nd behind **MinutiaeNet** (0.574)
-  on loc detection, and it has the **best loc+angle AP** (0.534 with TTA).
+  full-image, no segmentation (see **Protocol** above); there it trails **MinutiaeNet** on loc
+  detection (0.538 vs 0.574), but it has the **best loc+angle AP** (0.534 with TTA).
 - It pools fingerprints + palms **cleanly** — the universal model matches per-domain specialists
   (no dilution).
 - **TTA** (`MinutiaeExtractor(tta=True)`) averages the detection map over 4 flips at ~5× forward
